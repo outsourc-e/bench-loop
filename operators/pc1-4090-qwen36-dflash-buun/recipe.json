@@ -1,0 +1,54 @@
+{
+  "id": "pc1-4090-qwen36-dflash-buun",
+  "title": "PC1 RTX 4090 Qwen3.6-35B-A3B DFlash / buun llama.cpp validation",
+  "purpose": "Continuously evaluate Qwen3.6 GGUF quality and speed on PC1 RTX 4090, prioritizing buun-llama-cpp/DFlash-like acceleration only when quality stays clean.",
+  "machine": "PC1",
+  "hardware": {
+    "gpu": "RTX 4090",
+    "vram_gb": 24
+  },
+  "runtime": {
+    "primary_engine": "buun-llama-cpp",
+    "fallback_engine": "llama.cpp",
+    "server_api": "OpenAI-compatible /v1/chat/completions",
+    "expected_cuda": true
+  },
+  "model": {
+    "family": "Qwen3.6",
+    "repo": "unsloth/Qwen3.6-35B-A3B-GGUF",
+    "preferred_quant_order": [
+      "UD-Q4_K_M",
+      "MXFP4_MOE",
+      "UD-IQ4_NL_XL",
+      "UD-Q3_K_XL"
+    ],
+    "quality_floor": "UD-Q4_K_M unless VRAM/runtime forces lower; do not productize sub-Q4 results without explicit quality win."
+  },
+  "candidate": {
+    "endpoint": "http://localhost:8083",
+    "model": "qwen36-buun-dflash",
+    "engine": "buun-llama-cpp",
+    "notes": "Use local buun/llama-server build if present; script is env-configurable because PC1 paths may differ."
+  },
+  "baseline": {
+    "endpoint": "http://localhost:8084",
+    "model": "qwen36-llama-cpp-baseline",
+    "engine": "llama.cpp",
+    "repo": "unsloth/Qwen3.6-35B-A3B-GGUF",
+    "file": "Qwen3.6-35B-A3B-UD-Q4_K_M.gguf"
+  },
+  "run_shape": {
+    "temperature": 0,
+    "max_tokens": 768,
+    "prompts": 8,
+    "repeats": 3,
+    "sleep_between_cycles_sec": 60
+  },
+  "gates": {
+    "quality": "All quality prompts pass. JSON parses. Code compiles. No markdown fences when forbidden. No corruption, replacement chars, broken imports/routes/braces, repeated nonsense, or early cutoff.",
+    "speed": "Candidate median completion tok/s >= 1.3x baseline for research continuation; >=1.5x for BenchLoop-ready win; >=2.0x strong win.",
+    "reliability": "No CUDA OOM, server crash, request timeout, non-2xx response, or hard-fail hit across full cycle.",
+    "benchloop_ready": "quality_pass=true AND reliability_pass=true AND speedup_vs_baseline>=1.5 AND at least 3 consecutive clean cycles."
+  },
+  "decision_rule": "Quality is the kill switch. Fast corrupted output is failure, not progress."
+}

@@ -1,0 +1,129 @@
+[
+  {
+    "id": "fastapi_health",
+    "category": "code_syntax",
+    "prompt": "Write a minimal FastAPI app with one /health endpoint returning {\"ok\": true}. Output code only, no markdown fences.",
+    "manual_pass_criteria": [
+      "Valid Python syntax",
+      "Uses from fastapi import FastAPI",
+      "Defines app = FastAPI()",
+      "Defines /health route",
+      "Returns ok true",
+      "No markdown fences/chatter"
+    ],
+    "hard_fail_patterns": [
+      "from fastapi = FastAPI",
+      "@app.get(\"/health():",
+      "@app.get(\"/health\":",
+      "```",
+      "\ufffd"
+    ]
+  },
+  {
+    "id": "json_object_only",
+    "category": "structured_output",
+    "prompt": "Given this JSON schema, produce one valid JSON object only: {\"name\":\"string\",\"age\":\"number\",\"tags\":[\"string\"]}",
+    "manual_pass_criteria": [
+      "Parseable JSON only",
+      "Top-level object",
+      "name string age number tags string array"
+    ],
+    "hard_fail_patterns": [
+      "```",
+      "Here is",
+      "undefined",
+      "\ufffd"
+    ]
+  },
+  {
+    "id": "fib_with_tests",
+    "category": "code_syntax",
+    "prompt": "Write a Python function fib(n) with assert tests for n=0, n=1, n=5, and n=10. Output code only, no markdown fences.",
+    "manual_pass_criteria": [
+      "Valid Python syntax",
+      "Defines fib(n)",
+      "Assertions include 0,1,5,10",
+      "Expected values 0,1,5,55"
+    ],
+    "hard_fail_patterns": [
+      "def fib(:",
+      "assert fib(10) == 10",
+      "```",
+      "\ufffd"
+    ]
+  },
+  {
+    "id": "exact_five_bullets",
+    "category": "instruction_following",
+    "prompt": "Summarize this in exactly 5 bullets, no intro: local LLM benchmarking needs speed, quality, reliability, hardware metadata, and reproducible commands.",
+    "manual_pass_criteria": [
+      "Exactly 5 bullets",
+      "Covers all five concepts",
+      "No intro/outro"
+    ],
+    "hard_fail_patterns": [
+      "Here are",
+      "```",
+      "\ufffd"
+    ]
+  },
+  {
+    "id": "specdec_tokenizer_120_words",
+    "category": "quality_control",
+    "prompt": "Explain speculative decoding in 120 words, including what can go wrong if tokenizers mismatch.",
+    "manual_pass_criteria": [
+      "90-150 words",
+      "Correct draft/target explanation",
+      "Mentions tokenizer mismatch risk",
+      "No obvious corruption"
+    ],
+    "hard_fail_patterns": [
+      "<0x",
+      "\ufffd",
+      "def "
+    ]
+  },
+  {
+    "id": "csv_to_json",
+    "category": "data_extract",
+    "prompt": "Convert this CSV to JSON array only: name,score\\nAda,9\\nTuring,10",
+    "manual_pass_criteria": [
+      "Parseable JSON array",
+      "Two objects",
+      "Correct names and numeric scores",
+      "No markdown"
+    ],
+    "hard_fail_patterns": [
+      "```",
+      "Here is",
+      "\ufffd"
+    ]
+  },
+  {
+    "id": "small_reasoning",
+    "category": "reasonmath",
+    "prompt": "A batch has 3 boxes. Each box has 4 trays. Each tray has 6 chips. 5 chips fail QA. Answer with only the number of working chips.",
+    "manual_pass_criteria": [
+      "Answer only 67"
+    ],
+    "hard_fail_patterns": [
+      "```",
+      "\ufffd"
+    ]
+  },
+  {
+    "id": "tool_json_call",
+    "category": "toolcall",
+    "prompt": "You have one tool: send_email(to:string, subject:string, body:string). User asks: email sam@example.com the subject 'BenchLoop' and body 'Run passed'. Output only JSON: {\"tool\":...,\"arguments\":...}",
+    "manual_pass_criteria": [
+      "Parseable JSON",
+      "tool is send_email",
+      "arguments include exact to/subject/body"
+    ],
+    "hard_fail_patterns": [
+      "```",
+      "Here is",
+      "\ufffd"
+    ]
+  }
+]

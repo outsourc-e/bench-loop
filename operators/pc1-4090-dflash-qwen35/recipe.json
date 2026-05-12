@@ -1,0 +1,39 @@
+{
+  "id": "pc1-4090-dflash-qwen35",
+  "title": "PC1 RTX 4090 Qwen3.5-27B DFlash validation",
+  "purpose": "Verify whether z-lab DFlash draft gives quality-preserving speedup over bare Qwen3.5-27B on a single RTX 4090.",
+  "machine": "PC1",
+  "hardware": {
+    "gpu": "RTX 4090",
+    "vram_gb": 24
+  },
+  "runtime": {
+    "engine": "vLLM",
+    "version_expected": "0.19.1",
+    "venv": "~/venv-dflash"
+  },
+  "dflash": {
+    "launcher": "~/dflash-vllm-launch.sh",
+    "endpoint": "http://localhost:8083",
+    "model": "Qwen3.5-27B-DFlash",
+    "target_model": "Qwen3.5-27B",
+    "draft_model": "z-lab/Qwen3.5-27B-DFlash"
+  },
+  "baseline": {
+    "endpoint": "http://localhost:8084",
+    "model": "Qwen/Qwen3.5-27B",
+    "launch_command": "python -m vllm.entrypoints.openai.api_server --model Qwen/Qwen3.5-27B --host 0.0.0.0 --port 8084 --max-model-len 32768 --gpu-memory-utilization 0.90 --trust-remote-code"
+  },
+  "run_shape": {
+    "temperature": 0,
+    "max_tokens": 512,
+    "prompts": 5,
+    "repeats": 3
+  },
+  "gates": {
+    "quality": "5/5 prompts pass manual review and 3/3 repeats per prompt are stable at temperature=0; JSON parses; code is syntactically sane; no malformed imports/decorators/braces/early cutoff/nonsense tokens.",
+    "speed": "DFlash completion tok/s >= 1.5x baseline. 2.0x+ strong win; 1.3-1.5x marginal; <1.3x fail.",
+    "reliability": "No CUDA OOM, no vLLM crash, no request hangs, server survives all 30 total requests."
+  },
+  "decision_rule": "Pass only if quality, speed, and reliability all pass. Any quality corruption kills the DFlash lane regardless of tok/s."
+}

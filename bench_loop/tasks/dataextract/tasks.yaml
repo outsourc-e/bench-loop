@@ -1,0 +1,1273 @@
+# Credit: Based on DataExtract-15 by stevibe (MIT license)
+# https://github.com/stevibe/DataExtract-15
+tasks:
+- category: A
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: de-01
+  messages:
+  - content: 'You are a data extraction assistant. The user will provide you with unstructured text and a list of fields to extract.
+
+
+      Rules:
+
+      - Extract ONLY information that is explicitly stated in the source text.
+
+      - For string fields, copy the exact value from the source text. You may return an exact subspan when the requested field is only one component of a longer phrase.
+
+      - Do NOT paraphrase, summarize, translate, expand abbreviations, correct typos, normalize formatting, or rewrite values.
+
+      - If a field spans multiple consecutive source lines, preserve those line breaks in the JSON string.
+
+      - If a field''s value cannot be determined from explicit source text, use null.
+
+      - Do NOT infer, guess, or use background knowledge.
+
+      - Output valid JSON with the exact field names specified.
+
+      - Output ONLY the JSON object or JSON array. No explanations, no markdown fences.
+
+      - For numeric fields, output a JSON number only when the number is explicitly stated in the source text and can be copied by deterministic parsing.
+
+      - For boolean fields, output true or false only when the source text explicitly states the condition.
+
+      - If the prompt explicitly instructs you to resolve conflicts, use the final / most recent stated value. Otherwise do not resolve by inference.
+
+      - Preserve original capitalization, punctuation, wording, and language for string values.'
+    role: system
+  - content: 'Extract the contact information from this text:
+
+
+      Dr. Sarah Chen, Ph.D.
+
+      Senior Research Scientist
+
+      BioGen Therapeutics, Inc.
+
+      1420 Harbor Blvd, Suite 300
+
+      San Diego, CA 92101
+
+      Tel: (858) 555-0147
+
+      Email: s.chen@biogentherapeutics.com
+
+      LinkedIn: linkedin.com/in/sarahchen-phd
+
+
+      Fields: name, title, company, address, city, state, zip, phone, email, linkedin_url'
+    role: user
+  suite: dataextract
+  title: Business Card / Contact Info
+  validation:
+    expected:
+      address: 1420 Harbor Blvd, Suite 300
+      city: San Diego
+      company: BioGen Therapeutics, Inc.
+      email: s.chen@biogentherapeutics.com
+      linkedin_url: linkedin.com/in/sarahchen-phd
+      name: Dr. Sarah Chen, Ph.D.
+      phone: (858) 555-0147
+      state: CA
+      title: Senior Research Scientist
+      zip: '92101'
+- category: A
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: de-02
+  messages:
+  - content: 'You are a data extraction assistant. The user will provide you with unstructured text and a list of fields to extract.
+
+
+      Rules:
+
+      - Extract ONLY information that is explicitly stated in the source text.
+
+      - For string fields, copy the exact value from the source text. You may return an exact subspan when the requested field is only one component of a longer phrase.
+
+      - Do NOT paraphrase, summarize, translate, expand abbreviations, correct typos, normalize formatting, or rewrite values.
+
+      - If a field spans multiple consecutive source lines, preserve those line breaks in the JSON string.
+
+      - If a field''s value cannot be determined from explicit source text, use null.
+
+      - Do NOT infer, guess, or use background knowledge.
+
+      - Output valid JSON with the exact field names specified.
+
+      - Output ONLY the JSON object or JSON array. No explanations, no markdown fences.
+
+      - For numeric fields, output a JSON number only when the number is explicitly stated in the source text and can be copied by deterministic parsing.
+
+      - For boolean fields, output true or false only when the source text explicitly states the condition.
+
+      - If the prompt explicitly instructs you to resolve conflicts, use the final / most recent stated value. Otherwise do not resolve by inference.
+
+      - Preserve original capitalization, punctuation, wording, and language for string values.'
+    role: system
+  - content: 'Extract the transaction details from this receipt:
+
+
+      URBAN BEAN COFFEE
+
+      847 Market Street
+
+      San Francisco, CA 94103
+
+
+      Date: 03/15/2026  Time: 08:42 AM
+
+      Cashier: Mike  Register: #3
+
+
+      Americano (L)          $4.75
+
+      Oat Milk Latte (M)     $5.50
+
+      Blueberry Muffin       $3.25
+
+
+      Subtotal:             $13.50
+
+      Tax (8.625%):          $1.16
+
+      Total:                $14.66
+
+
+      Visa ending 4821
+
+      Auth: 772941
+
+
+      Fields: store_name, store_address, date, time, items (array of {name, price}), subtotal, tax_rate, tax_amount, total, payment_method, card_last_four'
+    role: user
+  suite: dataextract
+  title: Receipt / Invoice
+  validation:
+    expected:
+      card_last_four: '4821'
+      date: 03/15/2026
+      items:
+      - name: Americano (L)
+        price: 4.75
+      - name: Oat Milk Latte (M)
+        price: 5.5
+      - name: Blueberry Muffin
+        price: 3.25
+      payment_method: Visa
+      store_address: '847 Market Street
+
+        San Francisco, CA 94103'
+      store_name: URBAN BEAN COFFEE
+      subtotal: 13.5
+      tax_amount: 1.16
+      tax_rate: 8.625%
+      time: 08:42 AM
+      total: 14.66
+- category: A
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: de-03
+  messages:
+  - content: 'You are a data extraction assistant. The user will provide you with unstructured text and a list of fields to extract.
+
+
+      Rules:
+
+      - Extract ONLY information that is explicitly stated in the source text.
+
+      - For string fields, copy the exact value from the source text. You may return an exact subspan when the requested field is only one component of a longer phrase.
+
+      - Do NOT paraphrase, summarize, translate, expand abbreviations, correct typos, normalize formatting, or rewrite values.
+
+      - If a field spans multiple consecutive source lines, preserve those line breaks in the JSON string.
+
+      - If a field''s value cannot be determined from explicit source text, use null.
+
+      - Do NOT infer, guess, or use background knowledge.
+
+      - Output valid JSON with the exact field names specified.
+
+      - Output ONLY the JSON object or JSON array. No explanations, no markdown fences.
+
+      - For numeric fields, output a JSON number only when the number is explicitly stated in the source text and can be copied by deterministic parsing.
+
+      - For boolean fields, output true or false only when the source text explicitly states the condition.
+
+      - If the prompt explicitly instructs you to resolve conflicts, use the final / most recent stated value. Otherwise do not resolve by inference.
+
+      - Preserve original capitalization, punctuation, wording, and language for string values.'
+    role: system
+  - content: 'Extract the job details from this posting:
+
+
+      🚀 We''re Hiring! Senior Frontend Engineer
+
+
+      Location: Austin, TX (Hybrid - 3 days in office)
+
+      Team: Product Engineering
+
+      Reports to: VP of Engineering
+
+
+      Compensation: $145,000 - $185,000 base + equity + benefits
+
+
+      About the role:
+
+      We''re looking for a senior frontend engineer to lead our design system rebuild. You''ll work with React, TypeScript, and our custom component library. 3+ years of experience required.
+
+
+      Must have: React, TypeScript, CSS-in-JS, accessibility (WCAG 2.1)
+
+      Nice to have: GraphQL, Storybook, animation (Framer Motion)
+
+
+      Apply at careers.example.com/senior-fe or email jobs@example.com
+
+
+      Fields: job_title, location, work_model, team, reports_to, salary_min, salary_max, required_skills (array), preferred_skills (array), experience_years_min, apply_url, apply_email'
+    role: user
+  suite: dataextract
+  title: Job Posting
+  validation:
+    expected:
+      apply_email: jobs@example.com
+      apply_url: careers.example.com/senior-fe
+      experience_years_min: 3
+      job_title: Senior Frontend Engineer
+      location: Austin, TX
+      preferred_skills:
+      - GraphQL
+      - Storybook
+      - animation (Framer Motion)
+      reports_to: VP of Engineering
+      required_skills:
+      - React
+      - TypeScript
+      - CSS-in-JS
+      - accessibility (WCAG 2.1)
+      salary_max: 185000
+      salary_min: 145000
+      team: Product Engineering
+      work_model: Hybrid
+- category: B
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: de-04
+  messages:
+  - content: 'You are a data extraction assistant. The user will provide you with unstructured text and a list of fields to extract.
+
+
+      Rules:
+
+      - Extract ONLY information that is explicitly stated in the source text.
+
+      - For string fields, copy the exact value from the source text. You may return an exact subspan when the requested field is only one component of a longer phrase.
+
+      - Do NOT paraphrase, summarize, translate, expand abbreviations, correct typos, normalize formatting, or rewrite values.
+
+      - If a field spans multiple consecutive source lines, preserve those line breaks in the JSON string.
+
+      - If a field''s value cannot be determined from explicit source text, use null.
+
+      - Do NOT infer, guess, or use background knowledge.
+
+      - Output valid JSON with the exact field names specified.
+
+      - Output ONLY the JSON object or JSON array. No explanations, no markdown fences.
+
+      - For numeric fields, output a JSON number only when the number is explicitly stated in the source text and can be copied by deterministic parsing.
+
+      - For boolean fields, output true or false only when the source text explicitly states the condition.
+
+      - If the prompt explicitly instructs you to resolve conflicts, use the final / most recent stated value. Otherwise do not resolve by inference.
+
+      - Preserve original capitalization, punctuation, wording, and language for string values.'
+    role: system
+  - content: 'Extract the meeting details from this email thread:
+
+
+      ---
+
+      From: Lisa Park <lisa.p@company.com>
+
+      To: Team-Alpha <team-alpha@company.com>
+
+      Date: March 10, 2026, 3:47 PM
+
+      Subject: Re: Re: sprint planning??
+
+
+      ok so after talking to Jake, let''s do Thursday instead of Wednesday. Same time tho - 10am. We can use the Maple room since Oak is booked. bring your laptops, we''re gonna do live estimation this
+      time
+
+
+      btw the retro from last sprint is still on for Friday 2pm in Birch. don''t confuse the two lol
+
+
+      - Lisa
+
+      ---
+
+      From: Jake Torres <j.torres@company.com>
+
+      To: Team-Alpha <team-alpha@company.com>
+
+      Date: March 10, 2026, 2:15 PM
+
+      Subject: Re: sprint planning??
+
+
+      Wednesday doesn''t work for me, can we move it? Thursday or Friday works. Also the Oak room has a broken projector so maybe book a different one.
+
+      ---
+
+
+      Fields: meeting_name, day, time, room, organizer_name, organizer_email, note'
+    role: user
+  suite: dataextract
+  title: Informal Email Thread
+  validation:
+    expected:
+      day: Thursday
+      meeting_name: sprint planning
+      note: bring your laptops, we're gonna do live estimation this time
+      organizer_email: lisa.p@company.com
+      organizer_name: Lisa Park
+      room: Maple
+      time: 10am
+- category: B
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: de-05
+  messages:
+  - content: 'You are a data extraction assistant. The user will provide you with unstructured text and a list of fields to extract.
+
+
+      Rules:
+
+      - Extract ONLY information that is explicitly stated in the source text.
+
+      - For string fields, copy the exact value from the source text. You may return an exact subspan when the requested field is only one component of a longer phrase.
+
+      - Do NOT paraphrase, summarize, translate, expand abbreviations, correct typos, normalize formatting, or rewrite values.
+
+      - If a field spans multiple consecutive source lines, preserve those line breaks in the JSON string.
+
+      - If a field''s value cannot be determined from explicit source text, use null.
+
+      - Do NOT infer, guess, or use background knowledge.
+
+      - Output valid JSON with the exact field names specified.
+
+      - Output ONLY the JSON object or JSON array. No explanations, no markdown fences.
+
+      - For numeric fields, output a JSON number only when the number is explicitly stated in the source text and can be copied by deterministic parsing.
+
+      - For boolean fields, output true or false only when the source text explicitly states the condition.
+
+      - If the prompt explicitly instructs you to resolve conflicts, use the final / most recent stated value. Otherwise do not resolve by inference.
+
+      - Preserve original capitalization, punctuation, wording, and language for string values.'
+    role: system
+  - content: 'Extract the product details and reviewer''s assessment from this review:
+
+
+      ★★★★☆
+
+      Reviewed by: TechDad_42 on Feb 28, 2026
+
+      Verified Purchase
+
+
+      Bought the XR-7500 Pro noise-cancelling headphones for my daily commute. Was deciding between these and the Sony WH-1000XM5 ($348) but went with these since they were on sale for $279 (normally $329).
+      Battery life is honestly amazing — I get about 38 hours on a single charge vs the 30 hours Sony claims. The ANC is good but not quite as good as my old Bose QC45s tbh. Sound quality is excellent for
+      the price point. They fold flat which is great for my bag.
+
+
+      One complaint: the app (v3.2.1) is buggy on Android 14. Crashes when trying to customize EQ. Not a dealbreaker since the default sound profile is great.
+
+
+      Weight: 254g. Bluetooth 5.3. USB-C charging.
+
+
+      Would I recommend? Yeah, especially at the sale price. Best value under $300 IMO.
+
+
+      Fields: product_name, product_price_paid, product_price_original, rating_stars, reviewer_name, battery_life_hours, weight_grams, bluetooth_version, charging_type, competitor_1_name, competitor_1_price,
+      competitor_2_name, complaint, recommendation'
+    role: user
+  suite: dataextract
+  title: Product Review with Embedded Specs
+  validation:
+    expected:
+      battery_life_hours: 38
+      bluetooth_version: '5.3'
+      charging_type: USB-C
+      competitor_1_name: Sony WH-1000XM5
+      competitor_1_price: 348
+      competitor_2_name: Bose QC45s
+      complaint: the app (v3.2.1) is buggy on Android 14. Crashes when trying to customize EQ.
+      product_name: XR-7500 Pro
+      product_price_original: 329
+      product_price_paid: 279
+      rating_stars: 4
+      recommendation: Yeah, especially at the sale price.
+      reviewer_name: TechDad_42
+      weight_grams: 254
+- category: B
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: de-06
+  messages:
+  - content: 'You are a data extraction assistant. The user will provide you with unstructured text and a list of fields to extract.
+
+
+      Rules:
+
+      - Extract ONLY information that is explicitly stated in the source text.
+
+      - For string fields, copy the exact value from the source text. You may return an exact subspan when the requested field is only one component of a longer phrase.
+
+      - Do NOT paraphrase, summarize, translate, expand abbreviations, correct typos, normalize formatting, or rewrite values.
+
+      - If a field spans multiple consecutive source lines, preserve those line breaks in the JSON string.
+
+      - If a field''s value cannot be determined from explicit source text, use null.
+
+      - Do NOT infer, guess, or use background knowledge.
+
+      - Output valid JSON with the exact field names specified.
+
+      - Output ONLY the JSON object or JSON array. No explanations, no markdown fences.
+
+      - For numeric fields, output a JSON number only when the number is explicitly stated in the source text and can be copied by deterministic parsing.
+
+      - For boolean fields, output true or false only when the source text explicitly states the condition.
+
+      - If the prompt explicitly instructs you to resolve conflicts, use the final / most recent stated value. Otherwise do not resolve by inference.
+
+      - Preserve original capitalization, punctuation, wording, and language for string values.'
+    role: system
+  - content: 'Extract the patient visit details from these medical office notes (transcribed from handwritten):
+
+
+      Pt: Margaret Liu    DOB: 5/12/1958
+
+      Visit: 3-20-2026    Provider: Dr. Patel
+
+
+      CC: persistent cough x 3 weeks, worse at night
+
+      no fever, no weight loss
+
+      h/o asthma - childhood, resolved
+
+
+      BP 128/82  HR 76  Temp 98.4  SpO2 97%
+
+
+      Assessment: likely post-nasal drip r/t seasonal allergies
+
+      Plan: fluticasone nasal spray, follow up 2 wks if no improvement
+
+      Referral: none at this time
+
+
+      Rx: fluticasone propionate 50mcg, 2 sprays each nostril daily x 30 days
+
+
+      Fields: patient_name, date_of_birth, visit_date, provider, chief_complaint, blood_pressure_systolic, blood_pressure_diastolic, heart_rate, temperature, oxygen_saturation, assessment, medication_name,
+      medication_dose, medication_duration, referral'
+    role: user
+  suite: dataextract
+  title: Handwritten-Style Notes (OCR Simulation)
+  validation:
+    expected:
+      assessment: likely post-nasal drip r/t seasonal allergies
+      blood_pressure_diastolic: 82
+      blood_pressure_systolic: 128
+      chief_complaint: persistent cough x 3 weeks, worse at night
+      date_of_birth: 5/12/1958
+      heart_rate: 76
+      medication_dose: 50mcg, 2 sprays each nostril daily
+      medication_duration: 30 days
+      medication_name: fluticasone propionate
+      oxygen_saturation: 97
+      patient_name: Margaret Liu
+      provider: Dr. Patel
+      referral: null
+      temperature: 98.4
+      visit_date: 3-20-2026
+- category: C
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: de-07
+  messages:
+  - content: 'You are a data extraction assistant. The user will provide you with unstructured text and a list of fields to extract.
+
+
+      Rules:
+
+      - Extract ONLY information that is explicitly stated in the source text.
+
+      - For string fields, copy the exact value from the source text. You may return an exact subspan when the requested field is only one component of a longer phrase.
+
+      - Do NOT paraphrase, summarize, translate, expand abbreviations, correct typos, normalize formatting, or rewrite values.
+
+      - If a field spans multiple consecutive source lines, preserve those line breaks in the JSON string.
+
+      - If a field''s value cannot be determined from explicit source text, use null.
+
+      - Do NOT infer, guess, or use background knowledge.
+
+      - Output valid JSON with the exact field names specified.
+
+      - Output ONLY the JSON object or JSON array. No explanations, no markdown fences.
+
+      - For numeric fields, output a JSON number only when the number is explicitly stated in the source text and can be copied by deterministic parsing.
+
+      - For boolean fields, output true or false only when the source text explicitly states the condition.
+
+      - If the prompt explicitly instructs you to resolve conflicts, use the final / most recent stated value. Otherwise do not resolve by inference.
+
+      - Preserve original capitalization, punctuation, wording, and language for string values.'
+    role: system
+  - content: 'Extract information about each person mentioned in this email:
+
+
+      Hi team,
+
+
+      Quick updates after today''s meeting:
+
+
+      — Marcus Washington (Senior Designer, NYC office) is taking over the Acme rebrand from Sarah. He''ll be on-site in Chicago next week. His direct line is 212-555-0189. Contact him at m.washington@studio.com
+
+
+      — Sarah Kim is transitioning to the Globex account effective April 1. She''s relocating from Chicago to the LA office. No new phone yet — use her email sarah.k@studio.com for now.
+
+
+      — The freelance illustrator we hired for Acme is Priya Desai. She charges $95/hour. Her portfolio is at priyadesai.com. She''s based in Toronto but works US East Coast hours. Email: priya@priyadesai.com
+
+
+      Please update your contacts accordingly.
+
+      — Jordan
+
+
+      Fields per person: name, role, location, email, phone, hourly_rate, note
+
+      Extract as an array of person objects.'
+    role: user
+  suite: dataextract
+  title: Multiple People in One Document
+  validation:
+    expected:
+    - email: m.washington@studio.com
+      hourly_rate: null
+      location: NYC
+      name: Marcus Washington
+      note: taking over the Acme rebrand from Sarah. He'll be on-site in Chicago next week
+      phone: 212-555-0189
+      role: Senior Designer
+    - email: sarah.k@studio.com
+      hourly_rate: null
+      location: LA
+      name: Sarah Kim
+      note: transitioning to the Globex account effective April 1. She's relocating from Chicago to the LA office
+      phone: null
+      role: null
+    - email: priya@priyadesai.com
+      hourly_rate: 95
+      location: Toronto
+      name: Priya Desai
+      note: works US East Coast hours
+      phone: null
+      role: freelance illustrator
+- category: C
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: de-08
+  messages:
+  - content: 'You are a data extraction assistant. The user will provide you with unstructured text and a list of fields to extract.
+
+
+      Rules:
+
+      - Extract ONLY information that is explicitly stated in the source text.
+
+      - For string fields, copy the exact value from the source text. You may return an exact subspan when the requested field is only one component of a longer phrase.
+
+      - Do NOT paraphrase, summarize, translate, expand abbreviations, correct typos, normalize formatting, or rewrite values.
+
+      - If a field spans multiple consecutive source lines, preserve those line breaks in the JSON string.
+
+      - If a field''s value cannot be determined from explicit source text, use null.
+
+      - Do NOT infer, guess, or use background knowledge.
+
+      - Output valid JSON with the exact field names specified.
+
+      - Output ONLY the JSON object or JSON array. No explanations, no markdown fences.
+
+      - For numeric fields, output a JSON number only when the number is explicitly stated in the source text and can be copied by deterministic parsing.
+
+      - For boolean fields, output true or false only when the source text explicitly states the condition.
+
+      - If the prompt explicitly instructs you to resolve conflicts, use the final / most recent stated value. Otherwise do not resolve by inference.
+
+      - Preserve original capitalization, punctuation, wording, and language for string values.'
+    role: system
+  - content: 'Extract the event details from this text. If information conflicts, extract the MOST RECENT version.
+
+
+      === ORIGINAL INVITE (March 1) ===
+
+      Annual Company Picnic
+
+      Date: Saturday, June 14
+
+      Time: 11:00 AM – 4:00 PM
+
+      Location: Riverside Park, Shelter B
+
+      RSVP by May 15 to events@company.com
+
+      Catering by Fresh Bites ($22/person)
+
+
+      === UPDATE (March 12) ===
+
+      Hey all — slight change of plans. We''re moving the picnic to Lincoln Park (Shelter A) because Riverside is under construction. Same date and time. Also the caterer changed their pricing to $25/person.
+
+
+      === CORRECTION (March 18) ===
+
+      Sorry, one more update. The start time is now 11:30 AM (the park opens later than we thought). End time stays 4:00 PM. Everything else from the March 12 update still stands.
+
+
+      Fields: event_name, date, start_time, end_time, location_park, location_shelter, rsvp_deadline, rsvp_email, catering_company, catering_price_per_person'
+    role: user
+  suite: dataextract
+  title: Conflicting Information
+  validation:
+    expected:
+      catering_company: Fresh Bites
+      catering_price_per_person: 25
+      date: Saturday, June 14
+      end_time: 4:00 PM
+      event_name: Annual Company Picnic
+      location_park: Lincoln Park
+      location_shelter: Shelter A
+      rsvp_deadline: May 15
+      rsvp_email: events@company.com
+      start_time: 11:30 AM
+- category: C
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: de-09
+  messages:
+  - content: 'You are a data extraction assistant. The user will provide you with unstructured text and a list of fields to extract.
+
+
+      Rules:
+
+      - Extract ONLY information that is explicitly stated in the source text.
+
+      - For string fields, copy the exact value from the source text. You may return an exact subspan when the requested field is only one component of a longer phrase.
+
+      - Do NOT paraphrase, summarize, translate, expand abbreviations, correct typos, normalize formatting, or rewrite values.
+
+      - If a field spans multiple consecutive source lines, preserve those line breaks in the JSON string.
+
+      - If a field''s value cannot be determined from explicit source text, use null.
+
+      - Do NOT infer, guess, or use background knowledge.
+
+      - Output valid JSON with the exact field names specified.
+
+      - Output ONLY the JSON object or JSON array. No explanations, no markdown fences.
+
+      - For numeric fields, output a JSON number only when the number is explicitly stated in the source text and can be copied by deterministic parsing.
+
+      - For boolean fields, output true or false only when the source text explicitly states the condition.
+
+      - If the prompt explicitly instructs you to resolve conflicts, use the final / most recent stated value. Otherwise do not resolve by inference.
+
+      - Preserve original capitalization, punctuation, wording, and language for string values.'
+    role: system
+  - content: 'Extract ONLY the current (outermost) request details. Ignore quoted/forwarded content.
+
+
+      From: Alice Wong <alice@company.com>
+
+      To: Facilities <facilities@company.com>
+
+      Date: March 20, 2026
+
+      Subject: FW: Re: Conference Room Request
+
+
+      Hi Facilities,
+
+
+      Forwarding this thread for context, but here''s what I actually need:
+
+
+      Please book the Atlas room for 8 people on March 28, 2:00 PM–3:30 PM. We need a projector and whiteboard. No catering needed.
+
+
+      Thanks,
+
+      Alice
+
+
+      -------- Forwarded Message --------
+
+      From: Bob Chen <bob@company.com>
+
+      Date: March 15, 2026
+
+
+      Alice, I originally asked for the Summit room on March 22 for 12 people with lunch catering for the Q1 review. But that''s been cancelled now. Can you see if Atlas is available for a smaller meeting
+      instead?
+
+
+      -------- Original Message --------
+
+      From: Carol Davis <carol@company.com>
+
+      Date: March 10, 2026
+
+
+      Bob — the Phoenix room is booked for March 22. Try Summit or Atlas. We can do catering for up to 20 people.
+
+
+      Fields: requester_name, requester_email, room, date, start_time, end_time, attendee_count, needs_projector, needs_whiteboard, needs_catering'
+    role: user
+  suite: dataextract
+  title: Nested Quotes — Email Within Email
+  validation:
+    expected:
+      attendee_count: 8
+      date: March 28
+      end_time: 3:30 PM
+      needs_catering: false
+      needs_projector: true
+      needs_whiteboard: true
+      requester_email: alice@company.com
+      requester_name: Alice Wong
+      room: Atlas
+      start_time: 2:00 PM
+- category: D
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: de-10
+  messages:
+  - content: 'You are a data extraction assistant. The user will provide you with unstructured text and a list of fields to extract.
+
+
+      Rules:
+
+      - Extract ONLY information that is explicitly stated in the source text.
+
+      - For string fields, copy the exact value from the source text. You may return an exact subspan when the requested field is only one component of a longer phrase.
+
+      - Do NOT paraphrase, summarize, translate, expand abbreviations, correct typos, normalize formatting, or rewrite values.
+
+      - If a field spans multiple consecutive source lines, preserve those line breaks in the JSON string.
+
+      - If a field''s value cannot be determined from explicit source text, use null.
+
+      - Do NOT infer, guess, or use background knowledge.
+
+      - Output valid JSON with the exact field names specified.
+
+      - Output ONLY the JSON object or JSON array. No explanations, no markdown fences.
+
+      - For numeric fields, output a JSON number only when the number is explicitly stated in the source text and can be copied by deterministic parsing.
+
+      - For boolean fields, output true or false only when the source text explicitly states the condition.
+
+      - If the prompt explicitly instructs you to resolve conflicts, use the final / most recent stated value. Otherwise do not resolve by inference.
+
+      - Preserve original capitalization, punctuation, wording, and language for string values.'
+    role: system
+  - content: 'Extract the restaurant details from this review:
+
+
+      "Had dinner at Sakura Sushi last night with my partner. The place is tucked away on a quiet street in what I think is the Nob Hill neighborhood — honestly not 100% sure. The omakase was incredible,
+      maybe the best I''ve had in the city. We spent about 2 hours there. The chef (didn''t catch his name) was super friendly. No idea what we paid — my partner handled the bill. We took an Uber home so
+      I know it''s somewhere near California Street but I really couldn''t point to it on a map. Definitely going back."
+
+
+      Fields: restaurant_name, cuisine_type, neighborhood, street_address, chef_name, price_paid, visit_duration, rating_score, reservation_required, parking_available'
+    role: user
+  suite: dataextract
+  title: The Over-Extraction Trap
+  validation:
+    expected:
+      chef_name: null
+      cuisine_type: Sushi
+      neighborhood: null
+      parking_available: null
+      price_paid: null
+      rating_score: null
+      reservation_required: null
+      restaurant_name: Sakura Sushi
+      street_address: null
+      visit_duration: about 2 hours
+- category: D
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: de-11
+  messages:
+  - content: 'You are a data extraction assistant. The user will provide you with unstructured text and a list of fields to extract.
+
+
+      Rules:
+
+      - Extract ONLY information that is explicitly stated in the source text.
+
+      - For string fields, copy the exact value from the source text. You may return an exact subspan when the requested field is only one component of a longer phrase.
+
+      - Do NOT paraphrase, summarize, translate, expand abbreviations, correct typos, normalize formatting, or rewrite values.
+
+      - If a field spans multiple consecutive source lines, preserve those line breaks in the JSON string.
+
+      - If a field''s value cannot be determined from explicit source text, use null.
+
+      - Do NOT infer, guess, or use background knowledge.
+
+      - Output valid JSON with the exact field names specified.
+
+      - Output ONLY the JSON object or JSON array. No explanations, no markdown fences.
+
+      - For numeric fields, output a JSON number only when the number is explicitly stated in the source text and can be copied by deterministic parsing.
+
+      - For boolean fields, output true or false only when the source text explicitly states the condition.
+
+      - If the prompt explicitly instructs you to resolve conflicts, use the final / most recent stated value. Otherwise do not resolve by inference.
+
+      - Preserve original capitalization, punctuation, wording, and language for string values.'
+    role: system
+  - content: 'Extract the final confirmed details from this planning message:
+
+
+      "OK so for the team offsite: we were thinking Aspen but actually that''s too expensive so let''s do Lake Tahoe instead. Budget per person is $500, wait no, I just checked and it''s $450 after the
+      flights went up. Dates are April 10-12. Actually hold on — April 10 is a Monday and people need to fly in Sunday night, so let''s do April 11-13 (Tue-Thu). We''ll need 8 rooms. No wait, Jessica and
+      Tom are sharing, and Mike can''t make it anymore, so 6 rooms. The hotel is Mountain View Lodge. Or was it Mountain View Inn? Let me check... it''s Mountain View Lodge. Confirmed."
+
+
+      Fields: destination, budget_per_person, start_date, end_date, num_rooms, hotel_name, total_attendees'
+    role: user
+  suite: dataextract
+  title: Negation and Correction in Text
+  validation:
+    expected:
+      budget_per_person: 450
+      destination: Lake Tahoe
+      end_date: April 13
+      hotel_name: Mountain View Lodge
+      num_rooms: 6
+      start_date: April 11
+      total_attendees: null
+- category: D
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: de-12
+  messages:
+  - content: 'You are a data extraction assistant. The user will provide you with unstructured text and a list of fields to extract.
+
+
+      Rules:
+
+      - Extract ONLY information that is explicitly stated in the source text.
+
+      - For string fields, copy the exact value from the source text. You may return an exact subspan when the requested field is only one component of a longer phrase.
+
+      - Do NOT paraphrase, summarize, translate, expand abbreviations, correct typos, normalize formatting, or rewrite values.
+
+      - If a field spans multiple consecutive source lines, preserve those line breaks in the JSON string.
+
+      - If a field''s value cannot be determined from explicit source text, use null.
+
+      - Do NOT infer, guess, or use background knowledge.
+
+      - Output valid JSON with the exact field names specified.
+
+      - Output ONLY the JSON object or JSON array. No explanations, no markdown fences.
+
+      - For numeric fields, output a JSON number only when the number is explicitly stated in the source text and can be copied by deterministic parsing.
+
+      - For boolean fields, output true or false only when the source text explicitly states the condition.
+
+      - If the prompt explicitly instructs you to resolve conflicts, use the final / most recent stated value. Otherwise do not resolve by inference.
+
+      - Preserve original capitalization, punctuation, wording, and language for string values.'
+    role: system
+  - content: 'Extract details about the PRODUCT BEING REVIEWED, not any competitors mentioned.
+
+
+      "Bought a ZenBook Pro 15 laptop for my daughter''s college. $1,299 at Best Buy. She was also considering the MacBook Air M3 ($1,099) and the Dell XPS 13 ($1,199) but we went with ASUS because of the
+      OLED display and 16GB RAM. Battery life is about 10 hours which is less than the MacBook''s 18 hours but she''ll mostly use it plugged in. It''s heavier than the Dell at 1.8kg vs 1.2kg but the 15-inch
+      screen was important to her.
+
+
+      The i7-13700H processor handles everything she throws at it. 512GB SSD is fine for now — she keeps everything in Google Drive anyway. One thing that bugs me: it came with McAfee preinstalled and a
+      bunch of other bloatware. The ASUS customer support was also pretty bad when I called about a driver issue.
+
+
+      Overall: 4/5 stars. Great laptop for the price, just wish ASUS cleaned up the software experience."
+
+
+      Fields: product_name, brand, price, store, display_type, display_size, ram_gb, processor, storage, battery_life_hours, weight_kg, rating, operating_system, complaint'
+    role: user
+  suite: dataextract
+  title: Decoy Entity — Don't Extract the Wrong Thing
+  validation:
+    expected:
+      battery_life_hours: 10
+      brand: ASUS
+      complaint: it came with McAfee preinstalled and a bunch of other bloatware. The ASUS customer support was also pretty bad when I called about a driver issue.
+      display_size: 15-inch
+      display_type: OLED
+      operating_system: null
+      price: 1299
+      processor: i7-13700H
+      product_name: ZenBook Pro 15
+      ram_gb: 16
+      rating: 4
+      storage: 512GB SSD
+      store: Best Buy
+      weight_kg: 1.8
+- category: E
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: de-13
+  messages:
+  - content: 'You are a data extraction assistant. The user will provide you with unstructured text and a list of fields to extract.
+
+
+      Rules:
+
+      - Extract ONLY information that is explicitly stated in the source text.
+
+      - For string fields, copy the exact value from the source text. You may return an exact subspan when the requested field is only one component of a longer phrase.
+
+      - Do NOT paraphrase, summarize, translate, expand abbreviations, correct typos, normalize formatting, or rewrite values.
+
+      - If a field spans multiple consecutive source lines, preserve those line breaks in the JSON string.
+
+      - If a field''s value cannot be determined from explicit source text, use null.
+
+      - Do NOT infer, guess, or use background knowledge.
+
+      - Output valid JSON with the exact field names specified.
+
+      - Output ONLY the JSON object or JSON array. No explanations, no markdown fences.
+
+      - For numeric fields, output a JSON number only when the number is explicitly stated in the source text and can be copied by deterministic parsing.
+
+      - For boolean fields, output true or false only when the source text explicitly states the condition.
+
+      - If the prompt explicitly instructs you to resolve conflicts, use the final / most recent stated value. Otherwise do not resolve by inference.
+
+      - Preserve original capitalization, punctuation, wording, and language for string values.'
+    role: system
+  - content: 'Extract the invoice details:
+
+
+      INVOICE #INV-2026-0847
+
+
+      From: CloudTech Solutions, LLC
+
+      123 Innovation Way, Seattle, WA 98101
+
+      Tax ID: 91-7654321
+
+
+      Bill To: Meridian Corp
+
+      Attn: Accounts Payable
+
+      500 Commerce Dr, Portland, OR 97201
+
+      PO#: MC-2026-445
+
+
+      Invoice Date: March 15, 2026
+
+      Due Date: April 14, 2026
+
+      Terms: Net 30
+
+
+      ┌─────────────────────────────────────────────────────────────────────┐
+
+      │ Description                    │ Qty │ Unit Price │ Amount         │
+
+      ├─────────────────────────────────────────────────────────────────────┤
+
+      │ Cloud Hosting - Pro Plan       │ 12  │ $149.00    │ $1,788.00     │
+
+      │ API Gateway - Standard         │ 1   │ $299.00    │ $299.00       │
+
+      │ SSL Certificate - Wildcard     │ 2   │ $89.00     │ $178.00       │
+
+      │ Professional Services (hrs)    │ 8   │ $175.00    │ $1,400.00     │
+
+      │ Data Migration (one-time)      │ 1   │ $500.00    │ $500.00       │
+
+      ├─────────────────────────────────────────────────────────────────────┤
+
+      │ Subtotal                                           │ $4,165.00     │
+
+      │ Volume Discount (10%)                              │ -$416.50      │
+
+      │ Early Payment Credit                               │ -$50.00       │
+
+      │ ─────────────────────────────────────────────────────────────────── │
+
+      │ Total Due                                          │ $3,698.50     │
+
+      └─────────────────────────────────────────────────────────────────────┘
+
+
+      Payment: Wire transfer to Account #****4521 (Chase Bank)
+
+      For questions: billing@cloudtech.io
+
+
+      Fields: invoice_number, vendor_name, vendor_address, vendor_tax_id, client_name, client_po, invoice_date, due_date, payment_terms, line_items (array of {description, qty, unit_price, amount}), subtotal,
+      discounts (array of {description, amount}), total_due, payment_method, billing_contact_email'
+    role: user
+  suite: dataextract
+  title: Multi-Section Invoice with Discounts
+  validation:
+    expected:
+      billing_contact_email: billing@cloudtech.io
+      client_name: Meridian Corp
+      client_po: MC-2026-445
+      discounts:
+      - amount: -416.5
+        description: Volume Discount (10%)
+      - amount: -50
+        description: Early Payment Credit
+      due_date: April 14, 2026
+      invoice_date: March 15, 2026
+      invoice_number: INV-2026-0847
+      line_items:
+      - amount: 1788
+        description: Cloud Hosting - Pro Plan
+        qty: 12
+        unit_price: 149
+      - amount: 299
+        description: API Gateway - Standard
+        qty: 1
+        unit_price: 299
+      - amount: 178
+        description: SSL Certificate - Wildcard
+        qty: 2
+        unit_price: 89
+      - amount: 1400
+        description: Professional Services (hrs)
+        qty: 8
+        unit_price: 175
+      - amount: 500
+        description: Data Migration (one-time)
+        qty: 1
+        unit_price: 500
+      payment_method: Wire transfer
+      payment_terms: Net 30
+      subtotal: 4165
+      total_due: 3698.5
+      vendor_address: 123 Innovation Way, Seattle, WA 98101
+      vendor_name: CloudTech Solutions, LLC
+      vendor_tax_id: 91-7654321
+- category: E
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: de-14
+  messages:
+  - content: 'You are a data extraction assistant. The user will provide you with unstructured text and a list of fields to extract.
+
+
+      Rules:
+
+      - Extract ONLY information that is explicitly stated in the source text.
+
+      - For string fields, copy the exact value from the source text. You may return an exact subspan when the requested field is only one component of a longer phrase.
+
+      - Do NOT paraphrase, summarize, translate, expand abbreviations, correct typos, normalize formatting, or rewrite values.
+
+      - If a field spans multiple consecutive source lines, preserve those line breaks in the JSON string.
+
+      - If a field''s value cannot be determined from explicit source text, use null.
+
+      - Do NOT infer, guess, or use background knowledge.
+
+      - Output valid JSON with the exact field names specified.
+
+      - Output ONLY the JSON object or JSON array. No explanations, no markdown fences.
+
+      - For numeric fields, output a JSON number only when the number is explicitly stated in the source text and can be copied by deterministic parsing.
+
+      - For boolean fields, output true or false only when the source text explicitly states the condition.
+
+      - If the prompt explicitly instructs you to resolve conflicts, use the final / most recent stated value. Otherwise do not resolve by inference.
+
+      - Preserve original capitalization, punctuation, wording, and language for string values.'
+    role: system
+  - content: 'Extract the product details from this bilingual product listing:
+
+
+      【新発売】ワイヤレスイヤホン AirPulse X3
+
+      New Release: AirPulse X3 Wireless Earbuds
+
+
+      価格 / Price: ¥12,980 (税込 / tax included)
+
+      色 / Colors: ミッドナイトブラック (Midnight Black), パールホワイト (Pearl White), サクラピンク (Sakura Pink)
+
+
+      仕様 / Specifications:
+
+      ドライバー / Driver: 10mm ダイナミック / 10mm Dynamic
+
+      Bluetooth: 5.3
+
+      バッテリー / Battery: イヤホン本体 8時間 / Earbuds 8 hours, ケース込み 32時間 / With case 32 hours
+
+      防水 / Water resistance: IPX5
+
+      重量 / Weight: 片耳 5.2g / Per earbud 5.2g, ケース 42g / Case 42g
+
+      ノイキャン / ANC: ✓ アダプティブ / Adaptive
+
+
+      付属品 / Included: USB-C充電ケーブル, イヤーチップ(S/M/L), 取扱説明書
+
+      Included: USB-C charging cable, ear tips (S/M/L), user manual
+
+
+      販売元 / Sold by: SoundWave Electronics Co., Ltd. (東京都渋谷区)
+
+
+      Fields: product_name, product_type, price_jpy, tax_included, colors (array), driver_size, bluetooth_version, battery_life_earbuds_hours, battery_life_with_case_hours, water_resistance_rating, earbud_weight_grams,
+      case_weight_grams, has_anc, anc_type, included_items (array), seller_name, seller_location'
+    role: user
+  suite: dataextract
+  title: Multi-Language Document
+  validation:
+    expected:
+      anc_type: Adaptive
+      battery_life_earbuds_hours: 8
+      battery_life_with_case_hours: 32
+      bluetooth_version: '5.3'
+      case_weight_grams: 42
+      colors:
+      - Midnight Black
+      - Pearl White
+      - Sakura Pink
+      driver_size: 10mm
+      earbud_weight_grams: 5.2
+      has_anc: true
+      included_items:
+      - USB-C charging cable
+      - ear tips (S/M/L)
+      - user manual
+      price_jpy: 12980
+      product_name: AirPulse X3
+      product_type: Wireless Earbuds
+      seller_location: 東京都渋谷区
+      seller_name: SoundWave Electronics Co., Ltd.
+      tax_included: true
+      water_resistance_rating: IPX5
+- category: E
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: de-15
+  messages:
+  - content: 'You are a data extraction assistant. The user will provide you with unstructured text and a list of fields to extract.
+
+
+      Rules:
+
+      - Extract ONLY information that is explicitly stated in the source text.
+
+      - For string fields, copy the exact value from the source text. You may return an exact subspan when the requested field is only one component of a longer phrase.
+
+      - Do NOT paraphrase, summarize, translate, expand abbreviations, correct typos, normalize formatting, or rewrite values.
+
+      - If a field spans multiple consecutive source lines, preserve those line breaks in the JSON string.
+
+      - If a field''s value cannot be determined from explicit source text, use null.
+
+      - Do NOT infer, guess, or use background knowledge.
+
+      - Output valid JSON with the exact field names specified.
+
+      - Output ONLY the JSON object or JSON array. No explanations, no markdown fences.
+
+      - For numeric fields, output a JSON number only when the number is explicitly stated in the source text and can be copied by deterministic parsing.
+
+      - For boolean fields, output true or false only when the source text explicitly states the condition.
+
+      - If the prompt explicitly instructs you to resolve conflicts, use the final / most recent stated value. Otherwise do not resolve by inference.
+
+      - Preserve original capitalization, punctuation, wording, and language for string values.'
+    role: system
+  - content: 'Extract the company details from this "About Us" page:
+
+
+      Welcome to our website! We''re passionate about what we do and we''ve been doing it for a long time. Our team of dedicated professionals works hard every day to deliver the best results for our clients.
+      We believe in innovation, integrity, and excellence.
+
+
+      "Great service!" — A happy customer
+
+      "Would recommend!" — Another satisfied client
+
+
+      Contact us today to learn how we can help your business grow!
+
+      © 2026 All rights reserved.
+
+
+      Fields: company_name, founding_year, ceo_name, employee_count, headquarters_city, industry, annual_revenue, phone_number, email, website_url'
+    role: user
+  suite: dataextract
+  title: The Empty Document Trap
+  validation:
+    expected:
+      annual_revenue: null
+      ceo_name: null
+      company_name: null
+      email: null
+      employee_count: null
+      founding_year: null
+      headquarters_city: null
+      industry: null
+      phone_number: null
+      website_url: null

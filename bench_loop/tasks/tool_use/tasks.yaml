@@ -1,0 +1,318 @@
+tasks:
+  - id: tool-weather-lookup
+    suite: tool_use
+    messages:
+      - role: system
+        content: "You are a helpful assistant. Use the provided tools when appropriate."
+      - role: user
+        content: "What's the weather in Tokyo?"
+    config:
+      max_tokens: 1024
+      temperature: 0.0
+      tools:
+        - type: function
+          function:
+            name: get_weather
+            description: Get current weather for a city
+            parameters:
+              type: object
+              properties:
+                city:
+                  type: string
+                  description: City name
+                unit:
+                  type: string
+                  enum: [celsius, fahrenheit]
+                  description: Temperature unit
+              required: [city]
+    validation:
+      expected_tool: get_weather
+      expected_args:
+        city: Tokyo
+        unit: celsius
+
+  - id: tool-calculator
+    suite: tool_use
+    messages:
+      - role: system
+        content: "You are a helpful assistant. Use the provided tools when appropriate."
+      - role: user
+        content: "What's 15% of 842?"
+    config:
+      max_tokens: 1024
+      temperature: 0.0
+      tools:
+        - type: function
+          function:
+            name: calculate
+            description: Evaluate a math expression
+            parameters:
+              type: object
+              properties:
+                expression:
+                  type: string
+                  description: Math expression to evaluate
+              required: [expression]
+    validation:
+      expected_tool: calculate
+      expected_args:
+        expression: "0.15 * 842"
+
+  - id: tool-multi-tool-select
+    suite: tool_use
+    messages:
+      - role: system
+        content: "You are a helpful assistant. Use the provided tools when appropriate."
+      - role: user
+        content: "Find recent news about SpaceX."
+    config:
+      max_tokens: 1024
+      temperature: 0.0
+      tools:
+        - type: function
+          function:
+            name: search_web
+            description: Search the web for recent information
+            parameters:
+              type: object
+              properties:
+                query:
+                  type: string
+                  description: Search query
+              required: [query]
+        - type: function
+          function:
+            name: get_weather
+            description: Get weather for a city
+            parameters:
+              type: object
+              properties:
+                city:
+                  type: string
+                  description: City name
+              required: [city]
+        - type: function
+          function:
+            name: send_email
+            description: Send an email
+            parameters:
+              type: object
+              properties:
+                to:
+                  type: string
+                subject:
+                  type: string
+                body:
+                  type: string
+              required: [to, subject, body]
+    validation:
+      expected_tool: search_web
+      expected_args:
+        query: SpaceX
+
+  - id: tool-abstention
+    suite: tool_use
+    messages:
+      - role: system
+        content: "You are a helpful assistant. Use the provided tools when appropriate."
+      - role: user
+        content: "What is the meaning of life?"
+    config:
+      max_tokens: 1024
+      temperature: 0.0
+      tools:
+        - type: function
+          function:
+            name: get_weather
+            description: Get weather for a city
+            parameters:
+              type: object
+              properties:
+                city:
+                  type: string
+              required: [city]
+        - type: function
+          function:
+            name: search_web
+            description: Search the web
+            parameters:
+              type: object
+              properties:
+                query:
+                  type: string
+              required: [query]
+    validation:
+      expected_tool: null
+      expected_args: {}
+
+  - id: tool-file-operations
+    suite: tool_use
+    messages:
+      - role: system
+        content: "You are a helpful assistant. Use the provided tools when appropriate."
+      - role: user
+        content: "List all files in the /tmp directory."
+    config:
+      max_tokens: 1024
+      temperature: 0.0
+      tools:
+        - type: function
+          function:
+            name: read_file
+            description: Read a file from disk
+            parameters:
+              type: object
+              properties:
+                path:
+                  type: string
+              required: [path]
+        - type: function
+          function:
+            name: write_file
+            description: Write a file to disk
+            parameters:
+              type: object
+              properties:
+                path:
+                  type: string
+                content:
+                  type: string
+              required: [path, content]
+        - type: function
+          function:
+            name: list_directory
+            description: List files in a directory
+            parameters:
+              type: object
+              properties:
+                path:
+                  type: string
+              required: [path]
+    validation:
+      expected_tool: list_directory
+      expected_args:
+        path: /tmp
+
+  - id: tool-database-query
+    suite: tool_use
+    messages:
+      - role: system
+        content: "You are a helpful assistant. Use the provided tools when appropriate."
+      - role: user
+        content: "How many users signed up this month?"
+    config:
+      max_tokens: 1024
+      temperature: 0.0
+      tools:
+        - type: function
+          function:
+            name: query_db
+            description: Run a read-only SQL query
+            parameters:
+              type: object
+              properties:
+                sql:
+                  type: string
+              required: [sql]
+        - type: function
+          function:
+            name: insert_record
+            description: Insert a record into a table
+            parameters:
+              type: object
+              properties:
+                table:
+                  type: string
+                data:
+                  type: object
+              required: [table, data]
+    validation:
+      expected_tool: query_db
+      expected_args:
+        sql: SELECT COUNT
+
+  - id: tool-multi-step-reasoning
+    suite: tool_use
+    messages:
+      - role: system
+        content: "You are a helpful assistant. Use the provided tools when appropriate."
+      - role: user
+        content: "What's the average order value for user 42?"
+    config:
+      max_tokens: 1024
+      temperature: 0.0
+      tools:
+        - type: function
+          function:
+            name: get_user
+            description: Fetch a user by ID
+            parameters:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+              required: [user_id]
+        - type: function
+          function:
+            name: get_orders
+            description: Fetch orders for a user
+            parameters:
+              type: object
+              properties:
+                user_id:
+                  type: integer
+              required: [user_id]
+        - type: function
+          function:
+            name: calculate
+            description: Evaluate a math expression
+            parameters:
+              type: object
+              properties:
+                expression:
+                  type: string
+              required: [expression]
+    validation:
+      expected_tool: get_orders
+      expected_args:
+        user_id: 42
+
+  - id: tool-structured-json
+    suite: tool_use
+    messages:
+      - role: system
+        content: "You are a helpful assistant. Use the provided tools when appropriate."
+      - role: user
+        content: "Schedule a team standup for tomorrow at 9am in Room B with Alice, Bob, and Charlie."
+    config:
+      max_tokens: 1024
+      temperature: 0.0
+      tools:
+        - type: function
+          function:
+            name: create_event
+            description: Create a calendar event
+            parameters:
+              type: object
+              properties:
+                title:
+                  type: string
+                date:
+                  type: string
+                location:
+                  type: string
+                attendees:
+                  type: array
+                  items:
+                    type: string
+              required: [title, date, location, attendees]
+    validation:
+      expected_tool: create_event
+      expected_args:
+        title: team standup
+        date: tomorrow at 9am
+        location: Room B
+        attendees:
+          - Alice
+          - Bob
+          - Charlie

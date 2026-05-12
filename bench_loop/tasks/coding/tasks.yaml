@@ -1,0 +1,342 @@
+tasks:
+  - id: coding-csv-parser
+    suite: coding
+    messages:
+      - role: user
+        content: |
+          Write a Python function `parse_csv(text: str) -> list[dict]` that parses CSV text
+          (first row is headers) into a list of dicts. Handle quoted fields with commas inside them.
+    config:
+      max_tokens: 2048
+      temperature: 0.0
+    validation:
+      language: python
+      test_code: |
+        import csv
+        assert callable(parse_csv)
+        sample = 'name,age,city\nAlice,30,"New York, NY"\nBob,25,Boston\n'
+        expected = [
+            {"name": "Alice", "age": "30", "city": "New York, NY"},
+            {"name": "Bob", "age": "25", "city": "Boston"},
+        ]
+        assert parse_csv(sample) == expected
+        assert parse_csv("name,age\n") == []
+        print("PASS")
+
+  - id: coding-fibonacci-memo
+    suite: coding
+    messages:
+      - role: user
+        content: |
+          Write a Python function `fib(n: int) -> int` that returns the nth Fibonacci number
+          using memoization. fib(0)=0, fib(1)=1.
+    config:
+      max_tokens: 2048
+      temperature: 0.0
+    validation:
+      language: python
+      test_code: |
+        assert callable(fib)
+        assert fib(0) == 0
+        assert fib(1) == 1
+        assert fib(10) == 55
+        assert fib(30) == 832040
+        print("PASS")
+
+  - id: coding-flatten-nested
+    suite: coding
+    messages:
+      - role: user
+        content: |
+          Write a Python function `flatten(lst: list) -> list` that flattens arbitrarily nested lists.
+          Example: flatten([1, [2, [3, 4], 5]]) returns [1, 2, 3, 4, 5].
+    config:
+      max_tokens: 2048
+      temperature: 0.0
+    validation:
+      language: python
+      test_code: |
+        assert callable(flatten)
+        assert flatten([1, [2, [3, 4], 5]]) == [1, 2, 3, 4, 5]
+        assert flatten([]) == []
+        assert flatten([[], [1, [], [2]], 3]) == [1, 2, 3]
+        assert flatten([[[[1]]], 2, [3, [4, [5]]]]) == [1, 2, 3, 4, 5]
+        print("PASS")
+
+  - id: coding-bug-fix-off-by-one
+    suite: coding
+    messages:
+      - role: user
+        content: |
+          The following function has a bug. Fix it and return the corrected function.
+
+          ```python
+          def binary_search(arr, target):
+              left, right = 0, len(arr)
+              while left < right:
+                  mid = (left + right) // 2
+                  if arr[mid] == target:
+                      return mid
+                  elif arr[mid] < target:
+                      left = mid
+                  else:
+                      right = mid
+              return -1
+          ```
+    config:
+      max_tokens: 2048
+      temperature: 0.0
+    validation:
+      language: python
+      test_code: |
+        assert callable(binary_search)
+        arr = [1, 3, 5, 7, 9, 11]
+        assert binary_search(arr, 1) == 0
+        assert binary_search(arr, 7) == 3
+        assert binary_search(arr, 11) == 5
+        assert binary_search(arr, 4) == -1
+        assert binary_search([], 1) == -1
+        print("PASS")
+
+  - id: coding-json-validator
+    suite: coding
+    messages:
+      - role: user
+        content: |
+          Write a Python function `validate_user(data: dict) -> tuple[bool, list[str]]` that validates
+          a user dict. Required fields: 'name' (str, non-empty), 'email' (str, must contain @),
+          'age' (int, 0-150). Return (True, []) if valid, or (False, ['list of error messages']).
+    config:
+      max_tokens: 2048
+      temperature: 0.0
+    validation:
+      language: python
+      test_code: |
+        assert callable(validate_user)
+        assert validate_user({"name": "Alice", "email": "alice@example.com", "age": 30}) == (True, [])
+        ok, errors = validate_user({"email": "aliceexample.com", "age": 200})
+        assert ok is False
+        assert any("name" in error.lower() for error in errors)
+        assert any("email" in error.lower() for error in errors)
+        assert any("age" in error.lower() for error in errors)
+        print("PASS")
+
+  - id: coding-retry-decorator
+    suite: coding
+    messages:
+      - role: user
+        content: |
+          Write a Python decorator `retry(max_attempts=3, delay=1.0)` that retries a function on exception
+          up to max_attempts times, waiting delay seconds between attempts. If all attempts fail,
+          raise the last exception.
+    config:
+      max_tokens: 2048
+      temperature: 0.0
+    validation:
+      language: python
+      test_code: |
+        import time
+        assert callable(retry)
+        calls = {"count": 0}
+        original_sleep = time.sleep
+        time.sleep = lambda _seconds: None
+        try:
+            @retry(max_attempts=3, delay=0.01)
+            def flaky():
+                calls["count"] += 1
+                if calls["count"] < 3:
+                    raise ValueError("not yet")
+                return "ok"
+
+            assert flaky() == "ok"
+            assert calls["count"] == 3
+
+            failures = {"count": 0}
+
+            @retry(max_attempts=2, delay=0.01)
+            def always_fail():
+                failures["count"] += 1
+                raise RuntimeError("boom")
+
+            try:
+                always_fail()
+                raise AssertionError("expected RuntimeError")
+            except RuntimeError:
+                pass
+            assert failures["count"] == 2
+        finally:
+            time.sleep = original_sleep
+        print("PASS")
+
+  - id: coding-deduplicate-preserve-order
+    suite: coding
+    messages:
+      - role: user
+        content: |
+          Write a Python function `dedupe(lst: list) -> list` that removes duplicates from a list while
+          preserving the order of first occurrence.
+    config:
+      max_tokens: 2048
+      temperature: 0.0
+    validation:
+      language: python
+      test_code: |
+        assert callable(dedupe)
+        assert dedupe([1, 2, 3, 2, 1, 4]) == [1, 2, 3, 4]
+        assert dedupe([]) == []
+        assert dedupe(["a", "a", "a"]) == ["a"]
+        assert dedupe(["x", "y", "x", "z"]) == ["x", "y", "z"]
+        print("PASS")
+
+  - id: coding-add-error-handling
+    suite: coding
+    messages:
+      - role: user
+        content: |
+          Refactor this function to add proper error handling. Return None for any errors instead of crashing.
+
+          ```python
+          def get_nested_value(data, keys):
+              result = data
+              for key in keys:
+                  result = result[key]
+              return result
+          ```
+    config:
+      max_tokens: 2048
+      temperature: 0.0
+    validation:
+      language: python
+      test_code: |
+        assert callable(get_nested_value)
+        data = {"user": {"profile": {"name": "Alice"}}}
+        assert get_nested_value(data, ["user", "profile", "name"]) == "Alice"
+        assert get_nested_value(data, ["user", "missing"]) is None
+        assert get_nested_value({"user": None}, ["user", "name"]) is None
+        assert get_nested_value(data, []) == data
+        print("PASS")
+
+  - id: coding-lru-cache
+    suite: coding
+    messages:
+      - role: user
+        content: |
+          Write a Python class `LRUCache` with `__init__(self, capacity: int)`, `get(self, key: str) -> int | None`, and `put(self, key: str, value: int) -> None`. When capacity is exceeded, evict the least recently used key. Both get and put count as usage.
+    config:
+      max_tokens: 2048
+      temperature: 0.0
+    validation:
+      language: python
+      test_code: |
+        cache = LRUCache(2)
+        cache.put("a", 1)
+        cache.put("b", 2)
+        assert cache.get("a") == 1
+        cache.put("c", 3)
+        assert cache.get("b") is None
+        assert cache.get("c") == 3
+        cache.put("d", 4)
+        assert cache.get("a") is None
+        assert cache.get("c") == 3
+        assert cache.get("d") == 4
+        print("PASS")
+
+  - id: coding-rate-limiter
+    suite: coding
+    messages:
+      - role: user
+        content: |
+          Write a Python class `RateLimiter` with `__init__(self, max_calls: int, window_seconds: float)` and `allow(self) -> bool`. Returns True if the call is within the rate limit (max_calls within the sliding window), False otherwise.
+    config:
+      max_tokens: 2048
+      temperature: 0.0
+    validation:
+      language: python
+      test_code: |
+        import time
+        _real_time = time.time
+        _fake_time = [1000.0]
+        time.time = lambda: _fake_time[0]
+        try:
+            rl = RateLimiter(3, 10.0)
+            assert rl.allow() == True
+            assert rl.allow() == True
+            assert rl.allow() == True
+            assert rl.allow() == False
+            _fake_time[0] = 1011.0
+            assert rl.allow() == True
+            assert rl.allow() == True
+            assert rl.allow() == True
+            assert rl.allow() == False
+        finally:
+            time.time = _real_time
+        print("PASS")
+
+  - id: coding-async-to-sync-refactor
+    suite: coding
+    messages:
+      - role: user
+        content: |
+          Refactor this callback-based code to use a clean synchronous implementation that produces the same results:
+
+          ```python
+          def process_pipeline(data, on_complete):
+              def step1_done(result1):
+                  def step2_done(result2):
+                      def step3_done(result3):
+                          on_complete(result3)
+                      step3(result2, step3_done)
+                  step2(result1, step2_done)
+              step1(data, step1_done)
+
+          def step1(data, callback):
+              callback([x * 2 for x in data])
+
+          def step2(data, callback):
+              callback([x for x in data if x > 4])
+
+          def step3(data, callback):
+              callback(sum(data))
+          ```
+
+          Write a function `process_pipeline_sync(data: list[int]) -> int` that produces the same result without callbacks.
+    config:
+      max_tokens: 2048
+      temperature: 0.0
+    validation:
+      language: python
+      test_code: |
+        assert callable(process_pipeline_sync)
+        assert process_pipeline_sync([1, 2, 3, 4, 5]) == 24
+        assert process_pipeline_sync([1, 2]) == 0
+        assert process_pipeline_sync([3, 4, 5]) == 24
+        assert process_pipeline_sync([]) == 0
+        print("PASS")
+
+  - id: coding-parse-log-entries
+    suite: coding
+    messages:
+      - role: user
+        content: |
+          Write a Python function `parse_logs(text: str) -> list[dict]` that parses log lines in the format:
+          `[YYYY-MM-DD HH:MM:SS] LEVEL: message`
+          into a list of dicts with keys 'timestamp' (str), 'level' (str), 'message' (str). Skip malformed lines.
+    config:
+      max_tokens: 2048
+      temperature: 0.0
+    validation:
+      language: python
+      test_code: |
+        assert callable(parse_logs)
+        logs = """[2024-01-15 10:30:00] INFO: Server started
+        [2024-01-15 10:30:05] ERROR: Connection refused
+        bad line here
+        [2024-01-15 10:31:00] WARN: Retry attempt 3"""
+        result = parse_logs(logs)
+        assert len(result) == 3
+        assert result[0] == {"timestamp": "2024-01-15 10:30:00", "level": "INFO", "message": "Server started"}
+        assert result[1]["level"] == "ERROR"
+        assert result[2]["level"] == "WARN"
+        assert parse_logs("") == []
+        assert parse_logs("no valid logs here") == []
+        print("PASS")

@@ -1,0 +1,81 @@
+{
+  "id": "pc1-4090-qwen36-27b-dflash-buun",
+  "title": "PC1 RTX 4090 Qwen3.6-27B + spiritbuun DFlash GGUF / buun-llama-cpp validation",
+  "purpose": "Validate whether spiritbuun/Qwen3.6-27B-DFlash-GGUF gives quality-preserving throughput gains over the known clean Qwen3.6-27B no-draft llama.cpp baseline on one RTX 4090.",
+  "machine": "PC1",
+  "hardware": {
+    "gpu": "RTX 4090",
+    "vram_gb": 24
+  },
+  "runtime": {
+    "primary_engine": "spiritbuun/buun-llama-cpp",
+    "branch": "master",
+    "minimum_commit": "b9d01582b",
+    "server_api": "OpenAI-compatible /v1/chat/completions",
+    "expected_cuda": true,
+    "required_build_flags": [
+      "-DGGML_CUDA=ON",
+      "-DGGML_NATIVE=ON",
+      "-DGGML_CUDA_FA=ON",
+      "-DGGML_CUDA_FA_ALL_QUANTS=ON"
+    ]
+  },
+  "model": {
+    "family": "Qwen3.6",
+    "target_repo": "unsloth/Qwen3.6-27B-GGUF",
+    "target_file": "Qwen3.6-27B-Q4_K_M.gguf",
+    "target_fallback_file": "Qwen3.6-27B-UD-Q4_K_XL.gguf",
+    "draft_repo": "spiritbuun/Qwen3.6-27B-DFlash-GGUF",
+    "draft_file": "dflash-draft-3.6-q8_0.gguf",
+    "draft_reject_file": "dflash-draft-3.6-q4_k_m.gguf",
+    "quality_floor": "Use Q8_0 drafter first. Do not start with Q4_K_M drafter; README says acceptance drops ~17 points."
+  },
+  "candidate": {
+    "endpoint": "http://localhost:8083",
+    "model": "qwen36-27b-dflash-buun",
+    "engine": "buun-llama-cpp",
+    "port": 8083,
+    "server_flags": {
+      "spec_type": "dflash",
+      "ctx": 6048,
+      "ctx_draft": 256,
+      "batch": 256,
+      "ubatch": 64,
+      "ngl": 99,
+      "ngld": 99,
+      "flash_attention": "on",
+      "jinja": true,
+      "enable_thinking": false
+    }
+  },
+  "baseline": {
+    "endpoint": "http://localhost:8084",
+    "model": "qwen36-27b-llamacpp-baseline",
+    "engine": "buun-llama-cpp no-draft",
+    "port": 8084,
+    "server_flags": {
+      "ctx": 6048,
+      "batch": 256,
+      "ubatch": 64,
+      "ngl": 99,
+      "flash_attention": "on",
+      "jinja": true,
+      "enable_thinking": false
+    }
+  },
+  "run_shape": {
+    "temperature": 0,
+    "max_tokens": 768,
+    "prompts": 8,
+    "repeats": 3,
+    "sleep_between_cycles_sec": 60
+  },
+  "first_comparison": "Sequential baseline then candidate on same target quant/file, because a 24GB 4090 will not keep two Qwen3.6-27B targets resident at once.",
+  "gates": {
+    "quality": "All prompts pass: JSON parses, Python AST parses, exactly-5-bullets obeyed, 120-word answer stays 90-150 words, no markdown fences where forbidden, no replacement chars, no repeated junk, no malformed imports/routes/braces, no early cutoff.",
+    "speed": "Candidate median completion tok/s >= 1.3x baseline to continue research; >=1.5x for BenchLoop-ready win; >=2.0x strong win.",
+    "reliability": "No CUDA OOM, server crash, request timeout, non-2xx response, or hard-fail hit across full cycle.",
+    "kill": "Any corruption resembling prior bad spec-dec output kills the lane immediately, regardless of tok/s."
+  },
+  "benchloop_ready": "manual_review quality_pass=true AND reliability_pass=true AND speed_pass=true AND speedup_vs_baseline>=1.5 AND 3 consecutive clean cycles."
+}

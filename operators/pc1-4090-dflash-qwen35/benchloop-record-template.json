@@ -1,0 +1,26 @@
+{
+  "lane": "pc1-4090-dflash-qwen35",
+  "hardware": {
+    "machine": "PC1",
+    "gpu": "RTX 4090",
+    "vram_gb": 24
+  },
+  "runtime": {
+    "engine": "vLLM",
+    "version": "0.19.1",
+    "env": "~/venv-dflash"
+  },
+  "target_model": "Qwen3.5-27B",
+  "draft_model": "z-lab/Qwen3.5-27B-DFlash",
+  "endpoint": "http://localhost:8083",
+  "baseline_endpoint": "http://localhost:8084",
+  "prompts": 5,
+  "repeats": 3,
+  "temperature": 0,
+  "quality_pass": null,
+  "speedup": null,
+  "reliability_pass": null,
+  "decision": "pending",
+  "raw_result_path": "operators/pc1-4090-dflash-qwen35/runs/<run_id>/operator-result.json",
+  "notes": "Fill after manual output review. Quality failures override speed."
+}

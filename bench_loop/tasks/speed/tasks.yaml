@@ -1,0 +1,73 @@
+tasks:
+  - id: speed-short-001
+    suite: speed
+    messages:
+      - role: user
+        content: "Say hello in five words."
+    config:
+      max_tokens: 32
+      temperature: 0.0
+  - id: speed-short-002
+    suite: speed
+    messages:
+      - role: user
+        content: "Summarize HTTP in one sentence."
+    config:
+      max_tokens: 48
+      temperature: 0.0
+  - id: speed-short-003
+    suite: speed
+    messages:
+      - role: user
+        content: "Return a JSON object with keys ok and source."
+    config:
+      max_tokens: 64
+      temperature: 0.0
+  - id: speed-medium-001
+    suite: speed
+    messages:
+      - role: user
+        content: "Explain what a database index does in two short paragraphs."
+    config:
+      max_tokens: 160
+      temperature: 0.0
+  - id: speed-medium-002
+    suite: speed
+    messages:
+      - role: user
+        content: "Write three bullet points on why caching helps web apps."
+    config:
+      max_tokens: 160
+      temperature: 0.0
+  - id: speed-medium-003
+    suite: speed
+    messages:
+      - role: user
+        content: "Describe the difference between threads and processes."
+    config:
+      max_tokens: 160
+      temperature: 0.0
+  - id: speed-long-001
+    suite: speed
+    messages:
+      - role: user
+        content: "Write a concise guide to debugging a failing API integration."
+    config:
+      max_tokens: 384
+      temperature: 0.0
+  - id: speed-long-002
+    suite: speed
+    messages:
+      - role: user
+        content: "Explain the tradeoffs between REST and GraphQL for a startup backend."
+    config:
+      max_tokens: 384
+      temperature: 0.0
+  - id: speed-long-003
+    suite: speed
+    messages:
+      - role: user
+        content: "Outline how to migrate a monolith to services without breaking customers."
+    config:
+      max_tokens: 384
+      temperature: 0.0

@@ -1,0 +1,67 @@
+[
+  {
+    "id": "fastapi_health",
+    "category": "code_syntax",
+    "prompt": "Write a minimal FastAPI app with one /health endpoint returning {\"ok\": true}. Output code only.",
+    "manual_pass_criteria": [
+      "Valid Python syntax",
+      "Uses from fastapi import FastAPI, not malformed import syntax",
+      "Defines app = FastAPI()",
+      "Defines a /health route",
+      "Returns {\"ok\": true} or Python equivalent {'ok': True}",
+      "No markdown fences or explanatory chatter"
+    ],
+    "hard_fail_patterns": ["from fastapi = FastAPI", "@app.get(\"/health():", "@app.get(\"/health\":" ]
+  },
+  {
+    "id": "json_object_only",
+    "category": "structured_output",
+    "prompt": "Given this JSON schema, produce one valid JSON object only:\n{\"name\":\"string\",\"age\":\"number\",\"tags\":[\"string\"]}",
+    "manual_pass_criteria": [
+      "Output is parseable JSON with no markdown fences",
+      "Top-level value is an object",
+      "name is a string",
+      "age is a number",
+      "tags is an array of strings"
+    ],
+    "hard_fail_patterns": ["```", "Here is", "undefined"]
+  },
+  {
+    "id": "fib_with_tests",
+    "category": "code_syntax",
+    "prompt": "Write a Python function fib(n) with tests for n=0, n=1, n=5, and n=10. Output code only.",
+    "manual_pass_criteria": [
+      "Valid Python syntax",
+      "Defines fib(n)",
+      "Includes tests/assertions for 0, 1, 5, 10",
+      "Expected fib values are correct: 0, 1, 5, 55",
+      "No markdown fences or explanatory chatter"
+    ],
+    "hard_fail_patterns": ["def fib(:", "assert fib(10) == 10"]
+  },
+  {
+    "id": "five_bullets",
+    "category": "instruction_following",
+    "prompt": "Summarize this in exactly 5 bullets: local LLM benchmarking needs speed, quality, reliability, hardware metadata, and reproducible commands.",
+    "manual_pass_criteria": [
+      "Exactly 5 bullets",
+      "Covers speed",
+      "Covers quality",
+      "Covers reliability",
+      "Covers hardware metadata and reproducible commands"
+    ],
+    "hard_fail_patterns": []
+  },
+  {
+    "id": "specdec_120_words",
+    "category": "quality_control",
+    "prompt": "Explain speculative decoding in 120 words, including what can go wrong if tokenizers mismatch.",
+    "manual_pass_criteria": [
+      "Roughly 90-150 words",
+      "Correctly describes draft/target speculative decoding",
+      "Mentions tokenizer mismatch risk",
+      "No obvious nonsense tokens or corruption"
+    ],
+    "hard_fail_patterns": ["<0x", "�", "def "]
+  }
+]

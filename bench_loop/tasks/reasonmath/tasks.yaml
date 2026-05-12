@@ -1,0 +1,538 @@
+# Credit: Based on ReasonMath-15 by stevibe (MIT license)
+# https://github.com/stevibe/ReasonMath-15
+tasks:
+- category: A
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: rm-01
+  messages:
+  - content: 'You are a helpful assistant that solves practical reasoning problems.
+
+
+      Rules:
+
+      - Show concise visible work using equations, short bullet points, or numbered steps.
+
+      - Do not write a long essay.
+
+      - End with exactly one line that starts with "ANSWER: ".
+
+      - If the question asks for more than one value, format the final line as semicolon-separated key=value pairs.
+
+      - Use exact arithmetic when possible.
+
+      - Round only the final result when the problem context requires it.
+
+      - If the constraints are inconsistent, say so explicitly in the final answer.'
+    role: system
+  - content: Three friends had dinner. The food total was $84.00 before tax. Tax is 8.5%. They want to leave a 20% tip calculated on the pre-tax amount. How much does each person owe in total?
+    role: user
+  suite: reasonmath
+  title: Bill Splitting with Tax and Tip
+  validation: {}
+- category: A
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: rm-02
+  messages:
+  - content: 'You are a helpful assistant that solves practical reasoning problems.
+
+
+      Rules:
+
+      - Show concise visible work using equations, short bullet points, or numbered steps.
+
+      - Do not write a long essay.
+
+      - End with exactly one line that starts with "ANSWER: ".
+
+      - If the question asks for more than one value, format the final line as semicolon-separated key=value pairs.
+
+      - Use exact arithmetic when possible.
+
+      - Round only the final result when the problem context requires it.
+
+      - If the constraints are inconsistent, say so explicitly in the final answer.'
+    role: system
+  - content: A recipe calls for 2.5 cups of flour. I only have a kitchen scale. If 1 cup of flour weighs approximately 125 grams, how many kilograms of flour do I need?
+    role: user
+  suite: reasonmath
+  title: Unit Conversion Chain
+  validation: {}
+- category: A
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: rm-03
+  messages:
+  - content: 'You are a helpful assistant that solves practical reasoning problems.
+
+
+      Rules:
+
+      - Show concise visible work using equations, short bullet points, or numbered steps.
+
+      - Do not write a long essay.
+
+      - End with exactly one line that starts with "ANSWER: ".
+
+      - If the question asks for more than one value, format the final line as semicolon-separated key=value pairs.
+
+      - Use exact arithmetic when possible.
+
+      - Round only the final result when the problem context requires it.
+
+      - If the constraints are inconsistent, say so explicitly in the final answer.'
+    role: system
+  - content: 'A shirt was originally $80. It went on sale for 25% off. After you bought it on sale, the store raised the original price by 25%. What is the new original price, and did you save money compared
+      to the new price?
+
+
+      Return the final line exactly in this format:
+
+      ANSWER: new_original_price=<money>; saved_money=<yes|no>'
+    role: user
+  suite: reasonmath
+  title: Percentage Change — Not What You Think
+  validation: {}
+- category: B
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: rm-04
+  messages:
+  - content: 'You are a helpful assistant that solves practical reasoning problems.
+
+
+      Rules:
+
+      - Show concise visible work using equations, short bullet points, or numbered steps.
+
+      - Do not write a long essay.
+
+      - End with exactly one line that starts with "ANSWER: ".
+
+      - If the question asks for more than one value, format the final line as semicolon-separated key=value pairs.
+
+      - Use exact arithmetic when possible.
+
+      - Round only the final result when the problem context requires it.
+
+      - If the constraints are inconsistent, say so explicitly in the final answer.'
+    role: system
+  - content: 'There are 5 houses in a row. Each house is painted a different color: red, blue, green, yellow, white. Given these clues:
+
+      1. The red house is immediately to the left of the blue house.
+
+      2. The green house is in the middle (position 3).
+
+      3. The yellow house is not next to the green house.
+
+      4. The white house is at one of the ends (position 1 or 5).
+
+
+      What is the order of the houses from left to right?'
+    role: user
+  suite: reasonmath
+  title: Constraint Consistency Check
+  validation: {}
+- category: B
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: rm-05
+  messages:
+  - content: 'You are a helpful assistant that solves practical reasoning problems.
+
+
+      Rules:
+
+      - Show concise visible work using equations, short bullet points, or numbered steps.
+
+      - Do not write a long essay.
+
+      - End with exactly one line that starts with "ANSWER: ".
+
+      - If the question asks for more than one value, format the final line as semicolon-separated key=value pairs.
+
+      - Use exact arithmetic when possible.
+
+      - Round only the final result when the problem context requires it.
+
+      - If the constraints are inconsistent, say so explicitly in the final answer.'
+    role: system
+  - content: 'I need to schedule 4 meetings today. Each meeting is 45 minutes long with 15 minutes of buffer between meetings. My available time starts at 9:00 AM and ends at 1:00 PM. I also have a fixed
+      lunch break from 12:00 PM to 12:30 PM that cannot be moved.
+
+
+      Can I fit all 4 meetings? If yes, what are the time slots? If no, how many can I fit?
+
+
+      Return the final line exactly in this format:
+
+      ANSWER: fit=<yes|no>; max_meetings=<integer>
+
+
+      Do not include the slots in the final ANSWER line.'
+    role: user
+  suite: reasonmath
+  title: Scheduling Conflict Resolution
+  validation: {}
+- category: B
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: rm-06
+  messages:
+  - content: 'You are a helpful assistant that solves practical reasoning problems.
+
+
+      Rules:
+
+      - Show concise visible work using equations, short bullet points, or numbered steps.
+
+      - Do not write a long essay.
+
+      - End with exactly one line that starts with "ANSWER: ".
+
+      - If the question asks for more than one value, format the final line as semicolon-separated key=value pairs.
+
+      - Use exact arithmetic when possible.
+
+      - Round only the final result when the problem context requires it.
+
+      - If the constraints are inconsistent, say so explicitly in the final answer.'
+    role: system
+  - content: 'You''re on a game show with 4 doors. Behind one door is a car. Behind the other 3 doors are goats. You pick Door 1.
+
+
+      The host knows where the car is. The host always opens exactly 2 goat doors among the 3 doors you did not choose, leaving exactly 1 unopened alternative door besides your original choice. If the host
+      has more than one valid pair of goat doors to open, the host chooses uniformly at random among those valid pairs.
+
+
+      In this run, the host opens Door 3 and Door 4, both goats, and offers you the chance to switch to Door 2.
+
+
+      What is the probability of winning the car if you switch to Door 2? What if you stay with Door 1?'
+    role: user
+  suite: reasonmath
+  title: Monty Hall Variant with Explicit Host Rule
+  validation: {}
+- category: C
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: rm-07
+  messages:
+  - content: 'You are a helpful assistant that solves practical reasoning problems.
+
+
+      Rules:
+
+      - Show concise visible work using equations, short bullet points, or numbered steps.
+
+      - Do not write a long essay.
+
+      - End with exactly one line that starts with "ANSWER: ".
+
+      - If the question asks for more than one value, format the final line as semicolon-separated key=value pairs.
+
+      - Use exact arithmetic when possible.
+
+      - Round only the final result when the problem context requires it.
+
+      - If the constraints are inconsistent, say so explicitly in the final answer.'
+    role: system
+  - content: 'Alice drives from City A to City B at 60 km/h. The trip takes 3 hours. She then drives back from City B to City A, but hits traffic and averages only 40 km/h on the return.
+
+
+      What is her average speed for the entire round trip?'
+    role: user
+  suite: reasonmath
+  title: Speed, Distance, Time with a Twist
+  validation: {}
+- category: C
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: rm-08
+  messages:
+  - content: 'You are a helpful assistant that solves practical reasoning problems.
+
+
+      Rules:
+
+      - Show concise visible work using equations, short bullet points, or numbered steps.
+
+      - Do not write a long essay.
+
+      - End with exactly one line that starts with "ANSWER: ".
+
+      - If the question asks for more than one value, format the final line as semicolon-separated key=value pairs.
+
+      - Use exact arithmetic when possible.
+
+      - Round only the final result when the problem context requires it.
+
+      - If the constraints are inconsistent, say so explicitly in the final answer.'
+    role: system
+  - content: 'A bathtub has two faucets. Faucet A alone fills the tub in 12 minutes. Faucet B alone fills it in 18 minutes. There''s also a drain that empties the full tub in 36 minutes. If both faucets
+      are open and the drain is open, how long does it take to fill the tub?
+
+
+      Return the final line exactly in this format:
+
+      ANSWER: fill_time=<number> minutes'
+    role: user
+  suite: reasonmath
+  title: Rate and Proportion Problem
+  validation: {}
+- category: C
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: rm-09
+  messages:
+  - content: 'You are a helpful assistant that solves practical reasoning problems.
+
+
+      Rules:
+
+      - Show concise visible work using equations, short bullet points, or numbered steps.
+
+      - Do not write a long essay.
+
+      - End with exactly one line that starts with "ANSWER: ".
+
+      - If the question asks for more than one value, format the final line as semicolon-separated key=value pairs.
+
+      - Use exact arithmetic when possible.
+
+      - Round only the final result when the problem context requires it.
+
+      - If the constraints are inconsistent, say so explicitly in the final answer.'
+    role: system
+  - content: Five years ago, Maria was 3 times as old as her son. In 5 years from now, Maria will be twice as old as her son. How old is Maria now?
+    role: user
+  suite: reasonmath
+  title: Age Problem with Temporal Reasoning
+  validation: {}
+- category: D
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: rm-10
+  messages:
+  - content: 'You are a helpful assistant that solves practical reasoning problems.
+
+
+      Rules:
+
+      - Show concise visible work using equations, short bullet points, or numbered steps.
+
+      - Do not write a long essay.
+
+      - End with exactly one line that starts with "ANSWER: ".
+
+      - If the question asks for more than one value, format the final line as semicolon-separated key=value pairs.
+
+      - Use exact arithmetic when possible.
+
+      - Round only the final result when the problem context requires it.
+
+      - If the constraints are inconsistent, say so explicitly in the final answer.'
+    role: system
+  - content: A bat and a ball cost $1.10 together. The bat costs $1.00 more than the ball. A glove costs twice as much as the bat. How much does the glove cost?
+    role: user
+  suite: reasonmath
+  title: The Classic Bat and Ball — Extended
+  validation: {}
+- category: D
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: rm-11
+  messages:
+  - content: 'You are a helpful assistant that solves practical reasoning problems.
+
+
+      Rules:
+
+      - Show concise visible work using equations, short bullet points, or numbered steps.
+
+      - Do not write a long essay.
+
+      - End with exactly one line that starts with "ANSWER: ".
+
+      - If the question asks for more than one value, format the final line as semicolon-separated key=value pairs.
+
+      - Use exact arithmetic when possible.
+
+      - Round only the final result when the problem context requires it.
+
+      - If the constraints are inconsistent, say so explicitly in the final answer.'
+    role: system
+  - content: 'A lake has lily pads growing on it. The area covered by lily pads doubles every day. On day 30, the entire lake is covered. On what day was the lake half covered?
+
+
+      Return the final line exactly in this format:
+
+      ANSWER: day=<integer>'
+    role: user
+  suite: reasonmath
+  title: The Lily Pad Problem — Backward Reasoning
+  validation: {}
+- category: D
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: rm-12
+  messages:
+  - content: 'You are a helpful assistant that solves practical reasoning problems.
+
+
+      Rules:
+
+      - Show concise visible work using equations, short bullet points, or numbered steps.
+
+      - Do not write a long essay.
+
+      - End with exactly one line that starts with "ANSWER: ".
+
+      - If the question asks for more than one value, format the final line as semicolon-separated key=value pairs.
+
+      - Use exact arithmetic when possible.
+
+      - Round only the final result when the problem context requires it.
+
+      - If the constraints are inconsistent, say so explicitly in the final answer.'
+    role: system
+  - content: 'A man points to a photograph and says, "Brothers and sisters I have none, but that man''s father is my father''s son." Who is in the photograph?
+
+
+      Use the relationship from the speaker''s point of view.
+
+      Return the final line exactly in this format:
+
+      ANSWER: person=<relationship>'
+    role: user
+  suite: reasonmath
+  title: Family-Relation Riddle
+  validation: {}
+- category: E
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: rm-13
+  messages:
+  - content: 'You are a helpful assistant that solves practical reasoning problems.
+
+
+      Rules:
+
+      - Show concise visible work using equations, short bullet points, or numbered steps.
+
+      - Do not write a long essay.
+
+      - End with exactly one line that starts with "ANSWER: ".
+
+      - If the question asks for more than one value, format the final line as semicolon-separated key=value pairs.
+
+      - Use exact arithmetic when possible.
+
+      - Round only the final result when the problem context requires it.
+
+      - If the constraints are inconsistent, say so explicitly in the final answer.'
+    role: system
+  - content: 'I invest $5,000 in a savings account that earns 4.5% annual interest, compounded monthly. How much will I have after 3 years? What is the total interest earned?
+
+
+      Return the final line exactly in this format:
+
+      ANSWER: amount=<money>; interest=<money>'
+    role: user
+  suite: reasonmath
+  title: Compound Interest Calculation
+  validation: {}
+- category: E
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: rm-14
+  messages:
+  - content: 'You are a helpful assistant that solves practical reasoning problems.
+
+
+      Rules:
+
+      - Show concise visible work using equations, short bullet points, or numbered steps.
+
+      - Do not write a long essay.
+
+      - End with exactly one line that starts with "ANSWER: ".
+
+      - If the question asks for more than one value, format the final line as semicolon-separated key=value pairs.
+
+      - Use exact arithmetic when possible.
+
+      - Round only the final result when the problem context requires it.
+
+      - If the constraints are inconsistent, say so explicitly in the final answer.'
+    role: system
+  - content: 'A European recipe says to bake at 180°C for 45 minutes in a regular oven. I have a convection oven and I''m in the US. What temperature should I set in Fahrenheit, and for how long? Convection
+      ovens should be set 25°F lower than the regular-oven equivalent, and baking time should be reduced by about 25%.
+
+
+      Round the baking time to the nearest whole minute.
+
+
+      Return the final line exactly in this format:
+
+      ANSWER: temp_f=<integer>; time_min=<integer>'
+    role: user
+  suite: reasonmath
+  title: Conversion with Multiple Systems
+  validation: {}
+- category: E
+  config:
+    max_tokens: 2048
+    temperature: 0.0
+  id: rm-15
+  messages:
+  - content: 'You are a helpful assistant that solves practical reasoning problems.
+
+
+      Rules:
+
+      - Show concise visible work using equations, short bullet points, or numbered steps.
+
+      - Do not write a long essay.
+
+      - End with exactly one line that starts with "ANSWER: ".
+
+      - If the question asks for more than one value, format the final line as semicolon-separated key=value pairs.
+
+      - Use exact arithmetic when possible.
+
+      - Round only the final result when the problem context requires it.
+
+      - If the constraints are inconsistent, say so explicitly in the final answer.'
+    role: system
+  - content: 'A website requires a 4-digit PIN, where each digit is 0–9. How many possible PINs are there if:
+
+      1. All 4 digits must be different
+
+      2. The PIN must start with a non-zero digit
+
+      3. The digits must be in strictly increasing order
+
+
+      Return the final line exactly in this format:
+
+      ANSWER: count=<integer>'
+    role: user
+  suite: reasonmath
+  title: Combinatorial Reasoning — PIN Possibilities
+  validation: {}

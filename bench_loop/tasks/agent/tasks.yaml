@@ -1,0 +1,136 @@
+# Agent suite — multi-turn tool-using tasks.
+#
+# Each task is driven by BenchLoop's agent harness: the model emits tool calls,
+# BenchLoop executes them, feeds results back, and the model iterates until it
+# either gives a final answer or hits max_turns.
+#
+# Validation knobs:
+#   expected_contains: substrings that must appear in the final answer (lower-cased compare)
+#   max_turns:         hard ceiling on agent loop turns (default 6)
+#   tools:             which tool subset to expose to the model
+#   must_call:         list of {name, args_contains} the model must invoke
+tasks:
+  - id: agent-01-weather-math
+    suite: agent
+    title: "Weather + math: temperature difference"
+    messages:
+      - role: user
+        content: "What is the temperature difference between Berlin and Tokyo in Fahrenheit? Use the tools, then state the difference as a single integer in your final answer."
+    config:
+      temperature: 0.0
+    validation:
+      max_turns: 6
+      tools: [get_weather, calculator]
+      must_call:
+        - {name: get_weather, args_contains: {location: Berlin}}
+        - {name: get_weather, args_contains: {location: Tokyo}}
+      expected_contains: ["23"]
+
+  - id: agent-02-stock-portfolio
+    suite: agent
+    title: "Stocks: compute total portfolio value"
+    messages:
+      - role: user
+        content: "I own 10 shares of AAPL and 5 shares of MSFT. What is my total portfolio value? Use the tools and state the final dollar amount, rounded to the nearest dollar."
+    config:
+      temperature: 0.0
+    validation:
+      max_turns: 6
+      tools: [get_stock_price, calculator]
+      must_call:
+        - {name: get_stock_price, args_contains: {ticker: AAPL}}
+        - {name: get_stock_price, args_contains: {ticker: MSFT}}
+      expected_contains: ["3947"]
+
+  - id: agent-03-string-roundtrip
+    suite: agent
+    title: "Strings: reverse then count words"
+    messages:
+      - role: user
+        content: "Reverse this sentence: 'hello world from bench loop' and tell me how many words are in the reversed string. State the count as a single integer."
+    config:
+      temperature: 0.0
+    validation:
+      max_turns: 5
+      tools: [reverse_text, word_count]
+      must_call:
+        - {name: reverse_text, args_contains: {text: hello}}
+        - {name: word_count, args_contains: {}}
+      expected_contains: ["5"]
+
+  - id: agent-04-multi-step-calc
+    suite: agent
+    title: "Multi-step calculation"
+    messages:
+      - role: user
+        content: "Compute (12 * 7) + (45 / 5) using the calculator tool. State the final result as a single number."
+    config:
+      temperature: 0.0
+    validation:
+      max_turns: 4
+      tools: [calculator]
+      must_call:
+        - {name: calculator, args_contains: {}}
+      expected_contains: ["93"]
+
+  - id: agent-05-refuse-unknown-tool
+    suite: agent
+    title: "Should refuse to call a non-existent tool"
+    messages:
+      - role: user
+        content: "What is the population of Reykjavik? You only have weather and stock tools. If you cannot answer from those tools, say so explicitly."
+    config:
+      temperature: 0.0
+    validation:
+      max_turns: 4
+      tools: [get_weather, get_stock_price]
+      must_call: []
+      expected_contains: ["cannot"]
+
+  - id: agent-06-weather-fahrenheit
+    suite: agent
+    title: "Weather: report Paris in Fahrenheit"
+    messages:
+      - role: user
+        content: "Tell me the current temperature in Paris in Fahrenheit and the condition. Use the tool. Then give a one-sentence final answer."
+    config:
+      temperature: 0.0
+    validation:
+      max_turns: 4
+      tools: [get_weather]
+      must_call:
+        - {name: get_weather, args_contains: {location: Paris}}
+      expected_contains: ["55", "overcast"]
+
+  - id: agent-07-stocks-compare
+    suite: agent
+    title: "Compare two stocks"
+    messages:
+      - role: user
+        content: "Which is more expensive per share right now: NVDA or TSLA? Use the tools and state the winner's ticker in your final answer."
+    config:
+      temperature: 0.0
+    validation:
+      max_turns: 4
+      tools: [get_stock_price]
+      must_call:
+        - {name: get_stock_price, args_contains: {ticker: NVDA}}
+        - {name: get_stock_price, args_contains: {ticker: TSLA}}
+      expected_contains: ["nvda"]
+
+  - id: agent-08-chained-tools
+    suite: agent
+    title: "Chained tools: weather then calc"
+    messages:
+      - role: user
+        content: "What is the temperature in London plus the temperature in NYC (both Fahrenheit)? Use tools to fetch each, then use the calculator to add them. State the sum as a single integer."
+    config:
+      temperature: 0.0
+    validation:
+      max_turns: 6
+      tools: [get_weather, calculator]
+      must_call:
+        - {name: get_weather, args_contains: {location: London}}
+        - {name: get_weather, args_contains: {location: NYC}}
+        - {name: calculator, args_contains: {}}
+      expected_contains: ["110"]

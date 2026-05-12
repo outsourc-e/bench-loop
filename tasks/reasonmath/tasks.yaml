@@ -1,0 +1,458 @@
+# BenchLoop reasonmath rewrite
+# Fully original tasks, grouped as:
+# A = Arithmetic / Unit conversion (LR-01 to LR-03)
+# B = Logic / Constraints (LR-04 to LR-06)
+# C = Rate / Proportion (LR-07 to LR-09)
+# D = Cognitive traps (LR-10 to LR-12)
+# E = Multi-step applied (LR-13 to LR-15)
+
+# LR-01 verification:
+# 48 tiles * 7.5 in * 15 in = 5,400 sq in
+# Add 8% waste: 5,400 * 1.08 = 5,832 sq in
+# Convert to sq ft: 5,832 / 144 = 40.5 sq ft
+- id: LR-01
+  prompt: |-
+    A food truck floor is being retiled with 48 rectangular vinyl tiles. Each tile measures 7.5 inches by 15 inches.
+    The installer wants to buy 8% extra material for cuts and waste.
+
+    How many square feet of tile should be purchased in total?
+
+    Return the final line exactly in this format:
+    ANSWER: <number>
+  max_tokens: 512
+  metadata:
+    title: Food Truck Tile Coverage With Waste
+    difficulty: easy
+    capability_tags: [arithmetic, unit-conversion, geometry, construction]
+    verifier_type: tolerance
+    answer_type: numeric
+    expected_answer: "40.5"
+    answer_aliases: ["40.50", "40.5 sq ft", "40.50 sq ft"]
+    tolerance: 0.01
+
+# LR-02 verification:
+# 6 trays * 1.75 cups = 10.5 cups
+# 10.5 cups * 236.588 mL = 2,484.174 mL
+# 2,484.174 / 500 = 4.968348 bottles
+# Must buy whole bottles => 5
+- id: LR-02
+  prompt: |-
+    A prep kitchen is making 6 dessert trays. Each tray needs 1.75 cups of cream.
+    Cream is sold only in 500 mL bottles.
+    Use 1 cup = 236.588 mL.
+
+    What is the minimum whole number of bottles the kitchen must buy?
+
+    Return the final line exactly in this format:
+    ANSWER: <integer>
+  max_tokens: 512
+  metadata:
+    title: Kitchen Cream Bottle Count
+    difficulty: easy
+    capability_tags: [arithmetic, unit-conversion, cooking, rounding]
+    verifier_type: exact
+    answer_type: numeric
+    expected_answer: "5"
+    answer_aliases: ["5 bottles"]
+    tolerance: 0
+
+# LR-03 verification:
+# 24 bags * 60 lb = 1,440 lb
+# 3 buckets * 18 lb = 54 lb
+# Total = 1,494 lb
+# Convert to short tons: 1,494 / 2,000 = 0.747
+- id: LR-03
+  prompt: |-
+    A construction crew is loading materials onto a freight truck:
+    - 24 cement bags weighing 60 lb each
+    - 3 sealant buckets weighing 18 lb each
+
+    The freight broker wants the shipment weight in short tons, where 1 short ton = 2,000 lb.
+
+    What is the total shipment weight in short tons?
+
+    Return the final line exactly in this format:
+    ANSWER: <number>
+  max_tokens: 512
+  metadata:
+    title: Freight Weight in Short Tons
+    difficulty: easy
+    capability_tags: [arithmetic, unit-conversion, logistics, construction]
+    verifier_type: tolerance
+    answer_type: numeric
+    expected_answer: "0.747"
+    answer_aliases: ["0.747 short tons"]
+    tolerance: 0.001
+
+# LR-04 verification:
+# Bays 1-5 with trucks Atlas, Beacon, Comet, Drift, Ember.
+# Comet is bay 4.
+# Beacon is immediately right of Drift, so pair is either (1,2) or (2,3).
+# Ember is at an end. If Ember were bay 1, Atlas would have to be bay 3 (left of Comet and not next to Ember),
+# leaving no valid place for the Drift/Beacon pair. So Ember = bay 5.
+# Atlas must be left of Comet and not next to Ember, so Atlas cannot be bay 3 and must be bay 1.
+# Therefore Drift = bay 2 and Beacon = bay 3.
+# Final order: Atlas, Drift, Beacon, Comet, Ember
+- id: LR-04
+  prompt: |-
+    Five delivery trucks, Atlas, Beacon, Comet, Drift, and Ember, are parked in loading bays 1 through 5 from left to right.
+    Each truck occupies one different bay.
+
+    Clues:
+    1. Comet is in bay 4.
+    2. Beacon is immediately to the right of Drift.
+    3. Ember is parked at one of the ends.
+    4. Atlas is somewhere to the left of Comet.
+    5. Atlas is not next to Ember.
+
+    What is the order of the trucks from bay 1 to bay 5?
+
+    Return the final line exactly in this format:
+    ANSWER: Atlas, Drift, Beacon, Comet, Ember
+  max_tokens: 512
+  metadata:
+    title: Loading Bay Order Deduction
+    difficulty: medium
+    capability_tags: [logic, constraints, sequencing, logistics]
+    verifier_type: exact
+    answer_type: sequence
+    expected_answer: "Atlas, Drift, Beacon, Comet, Ember"
+    answer_aliases:
+      - "Atlas Drift Beacon Comet Ember"
+      - "atlas, drift, beacon, comet, ember"
+
+# LR-05 verification:
+# Quill finished immediately after Nova.
+# Pyre finished before Nova.
+# Pyre is not 4th, Rune is not 1st.
+# Nova cannot be 1st because then Pyre could not be before Nova.
+# Nova cannot be 3rd because then Quill would be 4th, leaving Pyre before Nova and Rune not 1st impossible.
+# So Nova = 2nd, Quill = 3rd, Pyre = 1st, Rune = 4th.
+# Final order: Pyre, Nova, Quill, Rune
+- id: LR-05
+  prompt: |-
+    Four players, Nova, Pyre, Quill, and Rune, finished 1st through 4th in a gaming tournament.
+
+    Clues:
+    1. Quill finished immediately after Nova.
+    2. Pyre finished before Nova.
+    3. Pyre did not finish 4th.
+    4. Rune did not finish 1st.
+
+    What was the finishing order from 1st to 4th?
+
+    Return the final line exactly in this format:
+    ANSWER: Pyre, Nova, Quill, Rune
+  max_tokens: 512
+  metadata:
+    title: Tournament Placement Logic
+    difficulty: medium
+    capability_tags: [logic, constraints, sequencing, gaming]
+    verifier_type: exact
+    answer_type: sequence
+    expected_answer: "Pyre, Nova, Quill, Rune"
+    answer_aliases:
+      - "Pyre Nova Quill Rune"
+      - "pyre, nova, quill, rune"
+
+# LR-06 verification:
+# Framing is Tuesday.
+# Roofing is immediately before Electrical.
+# Electrical is after Framing, so Roofing/Electrical cannot be Tue/Wed? Actually it can be Wed/Thu or Thu/Fri.
+# Plumbing is not Thursday.
+# If Roofing/Electrical were Thu/Fri, Plumbing would need to be Wed and Electrical would be Fri, which is valid,
+# but then Roofing would not be immediately before Electrical with Framing Tue? Wait that still works.
+# To make the solution unique, use clue 4 below: Electrical is on Thursday or later? No.
+# Final intended reasoning with given clues:
+# - Framing = Tue.
+# - Roofing immediately before Electrical.
+# - Plumbing not Thu.
+# - Electrical is not Fri.
+# So Roofing/Electrical must be Wed/Thu.
+# Then Plumbing = Fri.
+# Final day order: Framing, Roofing, Electrical, Plumbing
+- id: LR-06
+  prompt: |-
+    A contractor must schedule four inspections from Tuesday through Friday, one per day:
+    Framing, Roofing, Electrical, and Plumbing.
+
+    Clues:
+    1. Framing is on Tuesday.
+    2. Roofing is immediately before Electrical.
+    3. Plumbing is not on Thursday.
+    4. Electrical is not on Friday.
+
+    What is the inspection order from Tuesday to Friday?
+
+    Return the final line exactly in this format:
+    ANSWER: Framing, Roofing, Electrical, Plumbing
+  max_tokens: 512
+  metadata:
+    title: Inspection Schedule Constraints
+    difficulty: easy
+    capability_tags: [logic, constraints, scheduling, construction]
+    verifier_type: exact
+    answer_type: sequence
+    expected_answer: "Framing, Roofing, Electrical, Plumbing"
+    answer_aliases:
+      - "Framing Roofing Electrical Plumbing"
+      - "framing, roofing, electrical, plumbing"
+
+# LR-07 verification:
+# 420 miniatures / (5 printers * 6 hours) = 14 miniatures per printer-hour
+# 8 printers make 8 * 14 = 112 miniatures per hour
+# 1,008 / 112 = 9 hours
+- id: LR-07
+  prompt: |-
+    A print farm uses 5 resin printers to produce 420 tabletop miniatures in 6 hours.
+    Assume every printer works at the same constant rate.
+
+    At that same rate, how many hours would 8 printers need to produce 1,008 miniatures?
+
+    Return the final line exactly in this format:
+    ANSWER: <number>
+  max_tokens: 512
+  metadata:
+    title: Print Farm Throughput Scaling
+    difficulty: medium
+    capability_tags: [rate, proportion, production, gaming]
+    verifier_type: tolerance
+    answer_type: numeric
+    expected_answer: "9"
+    answer_aliases: ["9 hours"]
+    tolerance: 0.01
+
+# LR-08 verification:
+# 6 workers * 10 days = 60 worker-days produce 900 m
+# Rate = 900 / 60 = 15 m per worker-day
+# 8 workers produce 8 * 15 = 120 m per day
+# 1,320 / 120 = 11 days
+- id: LR-08
+  prompt: |-
+    A road crew of 6 workers paves 900 meters of lane in 10 days.
+    Assume output is proportional to the number of workers and the number of days.
+
+    How many days would 8 workers need to pave 1,320 meters at the same productivity?
+
+    Return the final line exactly in this format:
+    ANSWER: <number>
+  max_tokens: 512
+  metadata:
+    title: Road Crew Productivity Scaling
+    difficulty: medium
+    capability_tags: [rate, proportion, labor-scaling, construction]
+    verifier_type: tolerance
+    answer_type: numeric
+    expected_answer: "11"
+    answer_aliases: ["11 days"]
+    tolerance: 0.01
+
+# LR-09 verification:
+# 540 cans / (3 fillers * 18 min) = 10 cans per filler per minute
+# To make 1,200 cans in 20 min, required total rate = 1,200 / 20 = 60 cans per minute
+# Fillers needed = 60 / 10 = 6
+- id: LR-09
+  prompt: |-
+    A beverage line uses 3 can fillers to bottle 540 cans in 18 minutes.
+    All fillers run at the same constant rate.
+
+    How many fillers would be needed to bottle 1,200 cans in 20 minutes at that same rate?
+
+    Return the final line exactly in this format:
+    ANSWER: <integer>
+  max_tokens: 512
+  metadata:
+    title: Beverage Line Capacity Planning
+    difficulty: medium
+    capability_tags: [rate, proportion, production-planning, food-and-beverage]
+    verifier_type: exact
+    answer_type: numeric
+    expected_answer: "6"
+    answer_aliases: ["6 fillers"]
+    tolerance: 0
+
+# LR-10 verification:
+# Start = $8,000
+# After 25% drop: 8,000 * 0.75 = 6,000
+# After 25% gain: 6,000 * 1.25 = 7,500
+# Net change = 7,500 - 8,000 = -500
+- id: LR-10
+  prompt: |-
+    A trader starts the month with a crypto portfolio worth $8,000.
+    In week 1 the portfolio drops by 25%.
+    In week 2 it rises by 25% from its new value.
+
+    What is the final portfolio value, and what is the net dollar change relative to the starting value?
+
+    Return the final line exactly in this format:
+    ANSWER: final_value=<number>; net_change=<number>
+  max_tokens: 512
+  metadata:
+    title: Percentage Loss Then Gain Trap
+    difficulty: medium
+    capability_tags: [cognitive-trap, percentages, finance, compounding]
+    verifier_type: tolerance
+    answer_type: structured
+    expected_fields:
+      final_value: "7500"
+      net_change: "-500"
+    tolerance: 0.01
+
+# LR-11 verification:
+# Equal distances: 90 km out and 90 km back
+# Time out = 90 / 60 = 1.5 h
+# Time back = 90 / 30 = 3 h
+# Total distance = 180 km
+# Total time = 4.5 h
+# Average speed = 180 / 4.5 = 40 km/h
+- id: LR-11
+  prompt: |-
+    A shuttle van drives 90 km from the airport to a resort at 60 km/h.
+    It returns along the same 90 km route at 30 km/h because of traffic.
+
+    What is the average speed for the entire round trip?
+
+    Return the final line exactly in this format:
+    ANSWER: <number>
+  max_tokens: 512
+  metadata:
+    title: Round-Trip Average Speed Trap
+    difficulty: medium
+    capability_tags: [cognitive-trap, average-speed, travel, rates]
+    verifier_type: tolerance
+    answer_type: numeric
+    expected_answer: "40"
+    answer_aliases: ["40 km/h"]
+    tolerance: 0.01
+
+# LR-12 verification:
+# Coverage doubles every hour.
+# If full at 8:00 PM, then half-full one doubling earlier at 7:00 PM.
+- id: LR-12
+  prompt: |-
+    A temporary mesh network at a festival expands to cover twice as much area every hour.
+    At 8:00 PM, the entire venue is covered.
+
+    At what time was exactly half the venue covered?
+
+    Return the final line exactly in this format:
+    ANSWER: time=<time>
+  max_tokens: 512
+  metadata:
+    title: Doubling Process Backward Reasoning
+    difficulty: easy
+    capability_tags: [cognitive-trap, exponential-growth, backward-reasoning, events]
+    verifier_type: exact
+    answer_type: structured
+    expected_fields:
+      time: "7:00 PM"
+
+# LR-13 verification:
+# Battery capacity = 75 kWh
+# Start at 90% => 75 * 0.90 = 67.5 kWh
+# Leg 1 use = 180 km * 20 kWh / 100 km = 36 kWh
+# After leg 1 => 67.5 - 36 = 31.5 kWh
+# Charge to 80% => target battery energy = 75 * 0.80 = 60 kWh
+# Energy added to battery = 60 - 31.5 = 28.5 kWh
+# Charger is 95% efficient, so grid energy purchased = 28.5 / 0.95 = 30 kWh
+# Leg 2 use = 120 km * 25 kWh / 100 km = 30 kWh
+# Arrival battery = 60 - 30 = 30 kWh
+- id: LR-13
+  prompt: |-
+    An EV with a 75 kWh battery starts a trip at 90% charge.
+
+    Leg 1:
+    - Drive 180 km
+    - Consumption is 20 kWh per 100 km
+
+    At a charging stop, the driver charges the battery back up to 80%.
+    The charger has 5% loss, meaning only 95% of the grid energy reaches the battery.
+
+    Leg 2:
+    - Drive 120 km
+    - Consumption is 25 kWh per 100 km
+
+    How many kWh are purchased from the grid at the charging stop, and how many kWh remain in the battery on arrival?
+
+    Return the final line exactly in this format:
+    ANSWER: grid_kwh=<number>; arrival_kwh=<number>
+  max_tokens: 512
+  metadata:
+    title: EV Trip Energy and Charging Losses
+    difficulty: hard
+    capability_tags: [multi-step, energy, travel, percentages, unit-rates]
+    verifier_type: tolerance
+    answer_type: structured
+    expected_fields:
+      grid_kwh: "30"
+      arrival_kwh: "30"
+    tolerance: 0.01
+
+# LR-14 verification:
+# Deck area = 18 ft * 12 ft = 216 sq ft
+# Add 12% waste: 216 * 1.12 = 241.92 sq ft
+# Each board covers 5.5 in * 12 ft
+# 5.5 in = 5.5/12 ft, so coverage per board = (5.5/12) * 12 = 5.5 sq ft
+# Boards needed = 241.92 / 5.5 = 43.9854545..., so 44 boards
+# Packs needed = ceil(44 / 10) = 5
+# Total cost = 5 * $84 = $420
+- id: LR-14
+  prompt: |-
+    A builder is covering a rectangular deck that measures 18 ft by 12 ft.
+    Each deck board is 12 ft long and 5.5 inches wide.
+    The builder wants 12% extra material for waste.
+    Boards are sold only in packs of 10, and each pack costs $84.
+
+    How many packs must be purchased, and what is the total cost?
+
+    Return the final line exactly in this format:
+    ANSWER: packs=<integer>; cost=<number>
+  max_tokens: 512
+  metadata:
+    title: Deck Board Pack Purchase
+    difficulty: hard
+    capability_tags: [multi-step, geometry, unit-conversion, construction, costing]
+    verifier_type: tolerance
+    answer_type: structured
+    expected_fields:
+      packs: "5"
+      cost: "420"
+    tolerance: 0.01
+
+# LR-15 verification:
+# Hotel = 3 nights * €129 = €387
+# City tax = 3 nights * €4.50 = €13.50
+# Train = 2 tickets * €78 = €156
+# Total euro expenses = 387 + 13.5 + 156 = €556.50
+# Convert to USD at 1.08 => 556.5 * 1.08 = $601.02
+# Meal stipend = 2 people * 4 days * $35 = $280
+# Total reimbursement = 601.02 + 280 = $881.02
+- id: LR-15
+  prompt: |-
+    A company is reimbursing a two-person creator team for a conference trip.
+
+    Euro-denominated expenses:
+    - Hotel: 3 nights at €129 per night
+    - City tax: €4.50 per night
+    - Train tickets: 2 tickets at €78 each
+
+    USD-denominated stipend:
+    - Meals: $35 per person per day for 4 days
+
+    The company converts all euro expenses at 1 EUR = 1.08 USD.
+
+    What is the USD value of the euro expenses, and what is the total reimbursement in USD after adding the meal stipend?
+
+    Return the final line exactly in this format:
+    ANSWER: euro_usd=<number>; total_usd=<number>
+  max_tokens: 512
+  metadata:
+    title: Conference Travel Reimbursement
+    difficulty: hard
+    capability_tags: [multi-step, travel, currency-conversion, finance, budgeting]
+    verifier_type: tolerance
+    answer_type: structured
+    expected_fields:
+      euro_usd: "601.02"
+      total_usd: "881.02"
+    tolerance: 0.01
