@@ -6,7 +6,7 @@ Ship a credible beta release that people can install, run locally, and understan
 
 - CLI install works
 - Local web app works
-- Public site at benchloop.com explains the product
+- Public site at bench-loop.com explains the product
 - Public leaderboard has real seed data
 - Benchmark scores are useful: speed, quality, reliability, agent loop
 
@@ -73,14 +73,14 @@ Recommended public repos:
 - [ ] final pixel-chip logo assets from Eric
 - [ ] convert/generated OG PNG once logo is done
 - [ ] deploy to Cloudflare/Vercel
-- [ ] connect `benchloop.com` + `www.benchloop.com`
+- [ ] connect `bench-loop.com` + `www.bench-loop.com`
 
 ## Recommended launch order
 
 1. Push `bench-loop` to GitHub.
 2. Push `bench-loop-web` to GitHub.
 3. Deploy `bench-loop-web/site` to Cloudflare Pages.
-4. Connect `benchloop.com` and `www.benchloop.com`.
+4. Connect `bench-loop.com` and `www.bench-loop.com`.
 5. Publish `benchloop` to PyPI when ready.
 6. Tweet with the seed results:
    - pc1-coder-v2: agent 96.9, overall 74.3, 111 tok/s
@@ -122,8 +122,8 @@ npx wrangler pages deploy dist --project-name=benchloop
 
 Then add custom domains in Cloudflare Pages:
 
-- `benchloop.com`
-- `www.benchloop.com`
+- `bench-loop.com`
+- `www.bench-loop.com`
 
 ## Known beta caveats
 

@@ -73,15 +73,48 @@ def info() -> None:
 def run(model: str, endpoint: str, provider: str, suites: str, harness: str) -> None:
     """Run a benchmark."""
     selected_suites = [item.strip() for item in suites.split(",") if item.strip()]
-    benchmark = asyncio.run(
-        run_benchmark(
-            model=model,
-            endpoint=endpoint,
-            provider=provider,
-            suites=selected_suites,
-            harness=harness,
+    try:
+        benchmark = asyncio.run(
+            run_benchmark(
+                model=model,
+                endpoint=endpoint,
+                provider=provider,
+                suites=selected_suites,
+                harness=harness,
+            )
         )
-    )
+    except ValueError as exc:
+        msg = str(exc)
+        click.secho(f"\n✗ {msg}\n", fg="red", err=True)
+        if "not found on" in msg:
+            click.echo("Tips:", err=True)
+            click.echo("  • Make sure your local LLM server is running:", err=True)
+            click.echo("      Ollama:    ollama serve", err=True)
+            click.echo("      LM Studio: launch app, enable local server", err=True)
+            click.echo("  • Pull a model first, e.g.:", err=True)
+            click.echo("      ollama pull qwen3:1.7b", err=True)
+            click.echo("  • If your endpoint isn't Ollama, pass --provider openai_compat", err=True)
+            click.echo("  • Or launch the dashboard which auto-discovers models:", err=True)
+            click.echo("      benchloop dashboard", err=True)
+        raise SystemExit(1)
+    except ConnectionError as exc:
+        click.secho(f"\n✗ Could not reach endpoint {endpoint}: {exc}\n", fg="red", err=True)
+        click.echo("Is your local LLM server running?", err=True)
+        raise SystemExit(1)
+    except Exception as exc:  # noqa: BLE001
+        # Catch-all so a single mid-run failure (HTTP 500, OOM, network hiccup)
+        # gives the user a clean error instead of a Python traceback.
+        type_name = type(exc).__name__
+        click.secho(f"\n✗ Benchmark failed ({type_name}): {exc}\n", fg="red", err=True)
+        if "500" in str(exc) or "Internal Server Error" in str(exc):
+            click.echo("The provider returned HTTP 500. Common causes:", err=True)
+            click.echo("  • Model context window exceeded for this prompt", err=True)
+            click.echo("  • GPU OOM (try a smaller model or close other models)", err=True)
+            click.echo("  • Ollama crashed (check `ollama serve` logs)", err=True)
+        elif "timeout" in str(exc).lower():
+            click.echo("Timeout. Try a smaller model or check network stability.", err=True)
+        click.echo("\nFull error type: " + type_name, err=True)
+        raise SystemExit(1)
     print_run_report(benchmark)
     save_run(benchmark, endpoint=endpoint)
 
@@ -100,7 +133,7 @@ def suites() -> None:
 def export(output: str | None, include_all: bool) -> None:
     """Export local runs to a leaderboard-compatible JSON.
 
-    The output format matches the schema consumed by https://benchloop.com/leaderboard
+    The output format matches the schema consumed by https://bench-loop.com/leaderboard
     so you can submit your own runs via PR.
     """
     REQUIRED_FULL = {"speed", "toolcall", "dataextract", "instructfollow", "reasonmath"}

@@ -5,8 +5,8 @@
 </p>
 
 <p align="center">
-  <a href="https://bench-loop.com"><img src="https://img.shields.io/badge/site-bench-loop.com-2dd47f?style=flat-square" alt="site" /></a>
-  <a href="https://github.com/outsourc-e/bench-loop/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-2dd47f?style=flat-square" alt="MIT" /></a>
+  <a href="https://bench-loop.com"><img src="https://img.shields.io/badge/site-bench--loop.com-2dd47f?style=flat-square" alt="site" /></a>
+  <a href="https://pypi.org/project/benchloop-cli/"><img src="https://img.shields.io/pypi/v/benchloop-cli?style=flat-square&color=2dd47f" alt="pypi" /></a>  <a href="https://github.com/outsourc-e/bench-loop/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-2dd47f?style=flat-square" alt="MIT" /></a>
   <img src="https://img.shields.io/badge/status-beta-eab308?style=flat-square" alt="beta" />
 </p>
 
@@ -26,8 +26,7 @@ Speed    78.9  █████████░
 Agent    96.9  █████████▌
 ```
 
-Published runs live at <https://bench-loop.com/leaderboard>.
-
+Published runs live at <https://bench-loop.com/leaderboard>. Every completed local benchmark auto-publishes there.
 ## Why
 
 Hosted LLM leaderboards answer *"which model wins on a server farm someone else paid for?"* BenchLoop answers *"which model + harness + hardware combination actually works for me right now?"* — the question you have when picking a local stack.
@@ -39,14 +38,16 @@ It is repeatable on purpose: every run persists to disk, the task set is frozen,
 ### pipx (recommended)
 
 ```bash
-pipx install benchloop
+pipx install benchloop-cli
 benchloop --version
 ```
+
+> The PyPI distribution is named `benchloop-cli` (the bare `benchloop` name was taken by an unrelated dataset library). The installed commands are still `benchloop` and `bench-loop`.
 
 ### pip
 
 ```bash
-pip install benchloop
+pip install benchloop-cli
 ```
 
 ### From source
@@ -129,11 +130,18 @@ Tabs: Models, Benchmark, Leaderboard, Compare runs, Chat, agent trace viewer.
 
 ## Publish a run
 
-Run locally, export to the public leaderboard JSON, open a PR:
+Every completed benchmark auto-publishes to <https://bench-loop.com/leaderboard> via `https://api.bench-loop.com/submit`. Runs are deduped by `(machine_id, run_id)` so the same run from the same machine won't be double-counted.
+
+Opt out:
+
+```bash
+export BENCHLOOP_NO_SUBMIT=1
+```
+
+You can still manually export a snapshot for sharing / archiving:
 
 ```bash
 benchloop export --output my-runs.json
-# then PR against outsourc-e/bench-loop with the JSON
 ```
 
 ## Architecture

@@ -3,9 +3,12 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "benchloop"
-version = "0.1.0"
-description = "Local-first CLI + web app for benchmarking LLMs across quality, speed, reliability, and agent tool use."
+name = "benchloop-cli"
+version = "0.1.4"
+description = "Local-first CLI + web dashboard for benchmarking LLMs across quality, speed, reliability, and a real multi-turn agent loop. Hardware-aware, deterministic, reproducible."
+# Note: the PyPI name `benchloop` was already taken by an unrelated dataset
+# library, so the published distribution is `benchloop-cli`. The installed
+# console scripts remain `benchloop` and `bench-loop`.
 readme = "README.md"
 license = "MIT"
 authors = [{ name = "BenchLoop contributors" }]
@@ -44,8 +47,8 @@ benchloop = "bench_loop.cli:main"
 bench-loop = "bench_loop.cli:main"
 
 [project.urls]
-Homepage = "https://benchloop.com"
-Documentation = "https://benchloop.com/docs"
+Homepage = "https://bench-loop.com"
+Documentation = "https://bench-loop.com/docs"
 Repository = "https://github.com/outsourc-e/bench-loop"
 Issues = "https://github.com/outsourc-e/bench-loop/issues"
 

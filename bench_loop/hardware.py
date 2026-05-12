@@ -100,16 +100,76 @@ def _is_local_endpoint(endpoint: str | None) -> bool:
     return host in {"", "localhost", "127.0.0.1", "::1"}
 
 
+def _probe_remote_ollama_hardware(endpoint: str) -> dict[str, object] | None:
+    """Best-effort probe of a remote Ollama host for CPU/GPU info.
+
+    Ollama exposes `/api/ps` (running models with GPU info) and `/api/show`
+    metadata. Neither gives us full CPU info, so this returns whatever we can
+    extract; missing fields stay blank rather than lying with the local Mac's CPU.
+    """
+    import json
+    from urllib.request import Request, urlopen
+    from urllib.error import URLError
+
+    base = endpoint.rstrip("/")
+    info: dict[str, object] = {}
+    try:
+        req = Request(f"{base}/api/ps")
+        with urlopen(req, timeout=2) as r:
+            data = json.loads(r.read().decode("utf-8"))
+        for m in data.get("models", []) or []:
+            details = m.get("details") or {}
+            family = details.get("family") or ""
+            size_vram = m.get("size_vram") or 0
+            if size_vram and not info.get("gpu_memory_gb"):
+                info["gpu_memory_gb"] = round(size_vram / (1024 ** 3), 2)
+            if family and not info.get("_seen_family"):
+                info["_seen_family"] = family
+        info.pop("_seen_family", None)
+    except (URLError, OSError, ValueError, TimeoutError):
+        pass
+    return info or None
+
+
 def detect_hardware(endpoint: str | None = None) -> dict[str, object]:
     virtual_memory = psutil.virtual_memory()
     logical_cores = psutil.cpu_count(logical=True) or 0
     physical_cores = psutil.cpu_count(logical=False) or logical_cores
+    is_remote = bool(endpoint) and not _is_local_endpoint(endpoint)
+    endpoint_host = _endpoint_host(endpoint)
+
+    if is_remote:
+        # Don't lie: the local CPU/GPU is NOT what's running the model. Blank
+        # out hardware fields and label by host. Try a best-effort remote probe.
+        remote = _probe_remote_ollama_hardware(endpoint or "") or {}
+        gpu_info = {
+            "gpu": str(remote.get("gpu", "")),
+            "gpu_memory_gb": float(remote.get("gpu_memory_gb", 0.0) or 0.0),
+            "gpu_temperature_c": None,
+            "gpu_details": [],
+        }
+        machine_id = f"remote:{endpoint_host}" if endpoint_host else "remote"
+        return {
+            "machine_id": machine_id,
+            "os": "remote",
+            "platform": f"remote@{endpoint_host}",
+            "architecture": "",
+            "cpu": "",  # honest: we don't know remote CPU
+            "cpu_logical_cores": 0,
+            "cpu_physical_cores": 0,
+            "system_memory_gb": 0.0,
+            "backend": "ollama",
+            "endpoint": endpoint or "",
+            "is_remote": True,
+            "remote_host": endpoint_host,
+            **gpu_info,
+        }
+
     gpu_info = _detect_gpu()
 
+    # Stable per-machine id derived from MAC address (hex). Kept as machine_id
+    # for dedupe, but display layers should show cpu/gpu/ram, not the hex.
     machine_id = hex(getnode())
-    endpoint_host = _endpoint_host(endpoint)
-    if endpoint_host and not _is_local_endpoint(endpoint):
-        machine_id = f"{machine_id}@{endpoint_host}"
 
     return {
         "machine_id": machine_id,
@@ -122,5 +182,6 @@ def detect_hardware(endpoint: str | None = None) -> dict[str, object]:
         "system_memory_gb": round(virtual_memory.total / (1024**3), 2),
         "backend": "ollama",
         "endpoint": endpoint or "http://localhost:11434",
+        "is_remote": False,
         **gpu_info,
     }
