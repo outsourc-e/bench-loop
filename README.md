@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <a href="https://benchloop.com"><img src="https://img.shields.io/badge/site-benchloop.com-2dd47f?style=flat-square" alt="site" /></a>
+  <a href="https://bench-loop.com"><img src="https://img.shields.io/badge/site-bench-loop.com-2dd47f?style=flat-square" alt="site" /></a>
   <a href="https://github.com/outsourc-e/bench-loop/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-2dd47f?style=flat-square" alt="MIT" /></a>
   <img src="https://img.shields.io/badge/status-beta-eab308?style=flat-square" alt="beta" />
 </p>
