@@ -97,6 +97,19 @@ def run(
     gpu_memory_gb: float | None,
 ) -> None:
     """Run a benchmark."""
+    # Auto-detect provider for common ports if the user left it as the default
+    # 'ollama' but pointed at an OpenAI-compatible server. LM Studio (:1234),
+    # vLLM (:8000), llama.cpp's server (:8080), Jan (:1337), Osaurus, oMLX.
+    if provider == "ollama":
+        try:
+            from urllib.parse import urlparse
+            port = urlparse(endpoint).port
+            if port in {1234, 1337, 5001, 8000, 8080}:
+                provider = "openai_compat"
+                click.echo(f"[auto-detected provider=openai_compat from port {port}]", err=True)
+        except Exception:
+            pass
+
     # Surface CLI hardware overrides to detect_hardware() via env vars so the
     # whole detection pipeline picks them up without threading another arg.
     if hardware:

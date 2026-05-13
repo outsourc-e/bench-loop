@@ -143,11 +143,21 @@ async def _fetch_ollama_version(endpoint: str) -> str | None:
 
 
 async def _fetch_ollama_models(endpoint: str) -> list[dict]:
-    """Fetch models from an Ollama-style endpoint."""
+    """Fetch models from an Ollama-style endpoint.
+
+    LM Studio quirk: when pointed at LM Studio's OpenAI-compatible server, the
+    request to `/api/tags` returns HTTP 200 with a non-Ollama body and logs
+    'Unexpected endpoint or method' on its side. So we must validate the JSON
+    shape, not just the status code, to avoid silently treating it as 'ollama
+    with zero models'.
+    """
     async with httpx.AsyncClient(timeout=5) as client:
         resp = await client.get(f"{endpoint.rstrip('/')}/api/tags")
         resp.raise_for_status()
-    raw = resp.json().get("models", [])
+    body = resp.json() if resp.headers.get("content-type", "").startswith("application/json") else {}
+    if not isinstance(body, dict) or "models" not in body:
+        raise ValueError(f"{endpoint} did not respond like Ollama (no `models` key in /api/tags response)")
+    raw = body.get("models", [])
     version = await _fetch_ollama_version(endpoint)
     installed_tuple = _version_tuple(version) if version else (0,)
     models = []
@@ -222,33 +232,33 @@ async def _probe_provider(provider: dict) -> dict | None:
         return None
 
 
+_OPENAI_HINT_PORTS = {1234, 1337, 5001, 8000, 8080}
+
+
 @router.get("/models")
 async def list_models(endpoint: str = Query(default="")):
     """List models. If endpoint specified, query that. Otherwise auto-detect local providers."""
     if endpoint:
+        # If the port is well-known for OpenAI-compatible servers, try that first.
+        from urllib.parse import urlparse
         try:
-            models = await _fetch_ollama_models(endpoint)
-            return {
-                "providers": [{
-                    "name": "custom",
-                    "label": f"Custom ({endpoint})",
-                    "url": endpoint,
-                    "type": "ollama",
-                    "available": True,
-                    "model_count": len(models),
-                    "models": models,
-                }],
-                "total_models": len(models),
-            }
+            port = urlparse(endpoint).port
         except Exception:
+            port = None
+        order: list[str] = ["openai", "ollama"] if port in _OPENAI_HINT_PORTS else ["ollama", "openai"]
+        last_error: str | None = None
+        for kind in order:
             try:
-                models = await _fetch_openai_models(endpoint)
+                if kind == "ollama":
+                    models = await _fetch_ollama_models(endpoint)
+                else:
+                    models = await _fetch_openai_models(endpoint)
                 return {
                     "providers": [{
                         "name": "custom",
                         "label": f"Custom ({endpoint})",
                         "url": endpoint,
-                        "type": "openai",
+                        "type": kind,
                         "available": True,
                         "model_count": len(models),
                         "models": models,
@@ -256,11 +266,12 @@ async def list_models(endpoint: str = Query(default="")):
                     "total_models": len(models),
                 }
             except Exception as exc:
-                return {
-                    "providers": [],
-                    "total_models": 0,
-                    "error": f"Could not connect to {endpoint}: {exc}",
-                }
+                last_error = f"{kind}: {exc}"
+        return {
+            "providers": [],
+            "total_models": 0,
+            "error": f"Could not connect to {endpoint} ({last_error})",
+        }
 
     detected = []
     for provider in KNOWN_PROVIDERS + _user_extra_providers():

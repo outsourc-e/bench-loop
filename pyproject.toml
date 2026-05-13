@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "benchloop-cli"
-version = "0.2.2"
+version = "0.2.3"
 description = "Local-first CLI + web dashboard for benchmarking LLMs across quality, speed, reliability, and a real multi-turn agent loop. Hardware-aware, deterministic, reproducible."
 # Note: the PyPI name `benchloop` was already taken by an unrelated dataset
 # library, so the published distribution is `benchloop-cli`. The installed
