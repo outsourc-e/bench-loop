@@ -232,7 +232,7 @@ async def _probe_provider(provider: dict) -> dict | None:
         return None
 
 
-_OPENAI_HINT_PORTS = {1234, 1337, 5001, 8000, 8080}
+_OPENAI_HINT_PORTS = {1234, 1337, 5001, 8000, 8080, 8081}
 
 
 @router.get("/models")

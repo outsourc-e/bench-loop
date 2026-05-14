@@ -86,6 +86,21 @@ def info() -> None:
     type=float,
     help="GPU memory in GB to stamp on the run.",
 )
+@click.option(
+    "--profile-name",
+    default=None,
+    help="Optional public display name attached to published runs.",
+)
+@click.option(
+    "--profile-avatar-url",
+    default=None,
+    help="Optional avatar URL attached to published runs.",
+)
+@click.option(
+    "--profile-url",
+    default=None,
+    help="Optional profile URL attached to published runs.",
+)
 def run(
     model: str,
     endpoint: str,
@@ -95,6 +110,9 @@ def run(
     hardware: str | None,
     gpu: str | None,
     gpu_memory_gb: float | None,
+    profile_name: str | None,
+    profile_avatar_url: str | None,
+    profile_url: str | None,
 ) -> None:
     """Run a benchmark."""
     # Auto-detect provider for common ports if the user left it as the default
@@ -104,7 +122,7 @@ def run(
         try:
             from urllib.parse import urlparse
             port = urlparse(endpoint).port
-            if port in {1234, 1337, 5001, 8000, 8080}:
+            if port in {1234, 1337, 5001, 8000, 8080, 8081}:
                 provider = "openai_compat"
                 click.echo(f"[auto-detected provider=openai_compat from port {port}]", err=True)
         except Exception:
@@ -118,6 +136,12 @@ def run(
         os.environ["BENCHLOOP_GPU"] = gpu
     if gpu_memory_gb is not None:
         os.environ["BENCHLOOP_GPU_MEMORY_GB"] = str(gpu_memory_gb)
+
+    publish_profile = {
+        "name": profile_name,
+        "avatar_url": profile_avatar_url,
+        "profile_url": profile_url,
+    }
 
     selected_suites = [item.strip() for item in suites.split(",") if item.strip()]
     try:
@@ -172,7 +196,7 @@ def run(
             click.echo("Timeout. Try a smaller model, fewer suites, or check network stability.", err=True)
         raise SystemExit(1)
     print_run_report(benchmark)
-    save_run(benchmark, endpoint=endpoint)
+    save_run(benchmark, endpoint=endpoint, publish_profile=publish_profile)
 
 
 @main.command()
@@ -244,6 +268,9 @@ def export(output: str | None, include_all: bool) -> None:
             "agent_score": (suite_map.get("agent") or {}).get("score"),
             "agent_pass": (suite_map.get("agent") or {}).get("pass_count"),
             "agent_task_count": (suite_map.get("agent") or {}).get("task_count"),
+            "profile_name": ((data.get("profile") or {}).get("name") or ""),
+            "profile_avatar_url": ((data.get("profile") or {}).get("avatar_url") or ""),
+            "profile_url": ((data.get("profile") or {}).get("profile_url") or ""),
             "suites": {name: {"score": s.get("score", 0)} for name, s in suite_map.items()},
         }
 

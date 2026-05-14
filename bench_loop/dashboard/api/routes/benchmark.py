@@ -48,6 +48,9 @@ class BenchmarkRequest(BaseModel):
     harness: str = "raw"
     runs: int = 3
     timeout_sec: float = 300.0
+    profile_name: str | None = None
+    profile_avatar_url: str | None = None
+    profile_url: str | None = None
 
 
 @router.post("/benchmark/run")
@@ -138,7 +141,12 @@ async def _execute_run(run_id: str, req: "BenchmarkRequest", config: Any, on_pro
         _active_runs[run_id]["completed_at"] = datetime.now(timezone.utc).isoformat()
         _active_runs[run_id]["result"] = result.to_dict()
         try:
-            saved_path = save_run(result, endpoint=req.endpoint)
+            publish_profile = {
+                "name": req.profile_name,
+                "avatar_url": req.profile_avatar_url,
+                "profile_url": req.profile_url,
+            }
+            saved_path = save_run(result, endpoint=req.endpoint, publish_profile=publish_profile)
             _active_runs[run_id]["saved_path"] = str(saved_path)
         except Exception as save_exc:
             _active_runs[run_id]["events"].append({

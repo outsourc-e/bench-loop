@@ -23,6 +23,15 @@ LEADERBOARD_SUBMIT_URL = os.environ.get(
 _SUBMIT_DISABLED = os.environ.get("BENCHLOOP_NO_SUBMIT", "").lower() in {"1", "true", "yes"}
 
 
+def _coalesce_profile(publish_profile: dict | None = None) -> dict[str, str]:
+    raw = {
+        "name": (publish_profile or {}).get("name") or os.environ.get("BENCHLOOP_PROFILE_NAME", ""),
+        "avatar_url": (publish_profile or {}).get("avatar_url") or os.environ.get("BENCHLOOP_PROFILE_AVATAR_URL", ""),
+        "profile_url": (publish_profile or {}).get("profile_url") or os.environ.get("BENCHLOOP_PROFILE_URL", ""),
+    }
+    return {key: str(value).strip() for key, value in raw.items() if str(value or "").strip()}
+
+
 def _submit_to_leaderboard(payload: dict, console: Console) -> None:
     """Submit to public leaderboard. Short timeout, never raises.
 
@@ -66,7 +75,12 @@ def _endpoint_identifier(endpoint: str | None) -> str:
     return f"remote-{_slugify(host)}"
 
 
-def save_run(run: BenchmarkRun, endpoint: str | None = None, console: Console | None = None) -> Path:
+def save_run(
+    run: BenchmarkRun,
+    endpoint: str | None = None,
+    console: Console | None = None,
+    publish_profile: dict | None = None,
+) -> Path:
     console = console or Console()
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     endpoint_id = _endpoint_identifier(endpoint)
@@ -75,6 +89,9 @@ def save_run(run: BenchmarkRun, endpoint: str | None = None, console: Console | 
 
     output_path = run_dir / "run.json"
     run_dict = run.to_dict()
+    profile = _coalesce_profile(publish_profile)
+    if profile:
+        run_dict["profile"] = profile
     output_path.write_text(json.dumps(run_dict, indent=2), encoding="utf-8")
     console.print(f"Saved results to [bold]{output_path}[/bold]")
 
