@@ -15,7 +15,7 @@ from pydantic import BaseModel, Field
 
 from bench_loop.config import RunConfig
 from bench_loop.runner.orchestrator import run_benchmark
-from bench_loop.runner.result_writer import save_run
+from bench_loop.runner.result_writer import save_failed_run, save_run
 from bench_loop.models import BenchmarkRun
 
 router = APIRouter()
@@ -51,6 +51,7 @@ class BenchmarkRequest(BaseModel):
     profile_name: str | None = None
     profile_avatar_url: str | None = None
     profile_url: str | None = None
+    command_used: str | None = None
 
 
 @router.post("/benchmark/run")
@@ -146,7 +147,12 @@ async def _execute_run(run_id: str, req: "BenchmarkRequest", config: Any, on_pro
                 "avatar_url": req.profile_avatar_url,
                 "profile_url": req.profile_url,
             }
-            saved_path = save_run(result, endpoint=req.endpoint, publish_profile=publish_profile)
+            saved_path = save_run(
+                result,
+                endpoint=req.endpoint,
+                publish_profile=publish_profile,
+                command_used=req.command_used,
+            )
             _active_runs[run_id]["saved_path"] = str(saved_path)
         except Exception as save_exc:
             _active_runs[run_id]["events"].append({
@@ -171,6 +177,31 @@ async def _execute_run(run_id: str, req: "BenchmarkRequest", config: Any, on_pro
             "error": err_msg,
             "exception_class": type(exc).__name__,
         })
+        try:
+            publish_profile = {
+                "name": req.profile_name,
+                "avatar_url": req.profile_avatar_url,
+                "profile_url": req.profile_url,
+            }
+            saved_path = save_failed_run(
+                run_id=run_id,
+                model=req.model,
+                endpoint=req.endpoint,
+                provider=req.provider,
+                harness=req.harness,
+                suites=req.suites,
+                error=err_msg,
+                traceback_text=tb,
+                events=_active_runs[run_id].get("events", []),
+                publish_profile=publish_profile,
+                command_used=req.command_used,
+            )
+            _active_runs[run_id]["saved_path"] = str(saved_path)
+        except Exception as save_exc:
+            _active_runs[run_id]["events"].append({
+                "type": "persist_failed",
+                "error": str(save_exc),
+            })
         print(f"[bench-loop-api] run {run_id} failed:\n{tb}", flush=True)
 
 
@@ -245,6 +276,9 @@ async def list_runs(limit: int = Query(default=50, le=200)):
             overall_v2 = 0.55 * quality_v2 + 0.20 * speed_score_v2 + 0.25 * reliability_v2
             runs.append({
                 "id": d.name,
+                "status": data.get("status", "completed"),
+                "error": data.get("error", "") or "",
+                "traceback": data.get("traceback", "") or "",
                 "timestamp": data.get("timestamp", ""),
                 "model": model_obj.get("model_id", "unknown"),
                 "quantization": model_obj.get("quantization", "") or "",
@@ -273,6 +307,10 @@ async def list_runs(limit: int = Query(default=50, le=200)):
                 "provider": data.get("provider", ""),
                 "backend": machine.get("backend", data.get("provider", "")),
                 "machine": machine.get("machine_id", ""),
+                "profile_name": ((data.get("profile") or {}).get("name") or ""),
+                "profile_avatar_url": ((data.get("profile") or {}).get("avatar_url") or ""),
+                "profile_url": ((data.get("profile") or {}).get("profile_url") or ""),
+                "command_used": data.get("command_used", "") or "",
                 "gpu": machine.get("gpu", ""),
                 "gpu_memory_gb": machine.get("gpu_memory_gb", 0),
                 "cpu": machine.get("cpu", ""),
@@ -311,8 +349,19 @@ async def get_run(run_id: str):
     if hw_file.exists():
         hw_data = json.loads(hw_file.read_text())
 
+    status = data.get("status", "completed")
+    if status == "failed":
+        return {
+            "status": "failed",
+            "error": data.get("error", "Run failed"),
+            "traceback": data.get("traceback", ""),
+            "events": data.get("events", []),
+            "result": data,
+            "hardware": hw_data,
+        }
+
     return {
-        "status": "completed",
+        "status": status,
         "result": data,
         "hardware": hw_data,
     }

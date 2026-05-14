@@ -4,13 +4,14 @@ from __future__ import annotations
 import json
 import os
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from urllib.parse import urlparse
 
 import httpx
 from rich.console import Console
 
+from bench_loop.hardware import detect_hardware
 from bench_loop.models import BenchmarkRun
 
 
@@ -80,6 +81,7 @@ def save_run(
     endpoint: str | None = None,
     console: Console | None = None,
     publish_profile: dict | None = None,
+    command_used: str | None = None,
 ) -> Path:
     console = console or Console()
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
@@ -92,6 +94,8 @@ def save_run(
     profile = _coalesce_profile(publish_profile)
     if profile:
         run_dict["profile"] = profile
+    if command_used and str(command_used).strip():
+        run_dict["command_used"] = str(command_used).strip()
     output_path.write_text(json.dumps(run_dict, indent=2), encoding="utf-8")
     console.print(f"Saved results to [bold]{output_path}[/bold]")
 
@@ -99,4 +103,64 @@ def save_run(
     run_dict["run_id"] = run_dir.name
     _submit_to_leaderboard(run_dict, console)
 
+    return output_path
+
+
+def save_failed_run(
+    *,
+    run_id: str,
+    model: str,
+    endpoint: str,
+    provider: str,
+    harness: str,
+    suites: list[str],
+    error: str,
+    traceback_text: str | None = None,
+    events: list[dict] | None = None,
+    publish_profile: dict | None = None,
+    command_used: str | None = None,
+    console: Console | None = None,
+) -> Path:
+    console = console or Console()
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    endpoint_id = _endpoint_identifier(endpoint)
+    run_dir = RUNS_DIR / f"{timestamp}-{_slugify(model)}-{endpoint_id}-{_slugify(provider)}-failed"
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    machine = detect_hardware(endpoint=endpoint)
+    run_dict = {
+        "run_id": run_id,
+        "status": "failed",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "model": {
+            "model_id": model,
+            "family": "",
+            "parameter_count": "",
+            "quantization": "",
+        },
+        "machine": machine,
+        "provider": provider,
+        "harness": harness,
+        "requested_suites": suites,
+        "suites": {},
+        "overall_score": 0,
+        "quality_score": 0,
+        "speed_score": 0,
+        "reliability_score": 0,
+        "value_score": 0,
+        "speed_metrics": {},
+        "total_runtime_sec": 0,
+        "error": error,
+        "traceback": traceback_text or "",
+        "events": events or [],
+    }
+    profile = _coalesce_profile(publish_profile)
+    if profile:
+        run_dict["profile"] = profile
+    if command_used and str(command_used).strip():
+        run_dict["command_used"] = str(command_used).strip()
+
+    output_path = run_dir / "run.json"
+    output_path.write_text(json.dumps(run_dict, indent=2), encoding="utf-8")
+    console.print(f"Saved failed run to [bold]{output_path}[/bold]")
     return output_path

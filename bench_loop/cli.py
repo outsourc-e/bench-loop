@@ -101,6 +101,11 @@ def info() -> None:
     default=None,
     help="Optional profile URL attached to published runs.",
 )
+@click.option(
+    "--command-used",
+    default=None,
+    help="Optional launch command or config snippet to publish alongside the run.",
+)
 def run(
     model: str,
     endpoint: str,
@@ -113,6 +118,7 @@ def run(
     profile_name: str | None,
     profile_avatar_url: str | None,
     profile_url: str | None,
+    command_used: str | None,
 ) -> None:
     """Run a benchmark."""
     # Auto-detect provider for common ports if the user left it as the default
@@ -142,6 +148,7 @@ def run(
         "avatar_url": profile_avatar_url,
         "profile_url": profile_url,
     }
+    command_used = (command_used or os.environ.get("BENCHLOOP_COMMAND_USED") or "").strip() or None
 
     selected_suites = [item.strip() for item in suites.split(",") if item.strip()]
     try:
@@ -196,7 +203,12 @@ def run(
             click.echo("Timeout. Try a smaller model, fewer suites, or check network stability.", err=True)
         raise SystemExit(1)
     print_run_report(benchmark)
-    save_run(benchmark, endpoint=endpoint, publish_profile=publish_profile)
+    save_run(
+        benchmark,
+        endpoint=endpoint,
+        publish_profile=publish_profile,
+        command_used=command_used,
+    )
 
 
 @main.command()
@@ -301,7 +313,13 @@ def export(output: str | None, include_all: bool) -> None:
 @click.option("--ui-port", default=None, type=int, help="DEPRECATED. UI is now served by the API.")
 @click.option("--api-only", is_flag=True, help="Legacy flag, no-op now that UI is bundled.")
 @click.option("--dev/--no-dev", default=False, help="Use the sibling bench-loop-web repo with hot-reload (developer mode).")
-def dashboard(host: str, port: int, api_port: int | None, ui_port: int | None, api_only: bool, dev: bool) -> None:
+@click.option(
+    "--service-template",
+    type=click.Choice(["launchd", "systemd", "windows-task"], case_sensitive=False),
+    default=None,
+    help="Print a persistence template instead of launching the dashboard.",
+)
+def dashboard(host: str, port: int, api_port: int | None, ui_port: int | None, api_only: bool, dev: bool, service_template: str | None) -> None:
     """Launch the local web dashboard.
 
     By default this runs the bundled FastAPI + React app that ships inside the
@@ -318,6 +336,50 @@ def dashboard(host: str, port: int, api_port: int | None, ui_port: int | None, a
         port = api_port  # back-compat
     _ = ui_port  # ignored; bundled mode serves UI on `port`
     _ = api_only  # ignored; bundled mode is single-process
+
+    if service_template:
+        command = f"benchloop dashboard --host {host} --port {port}"
+        if service_template == "launchd":
+            click.echo(f'''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key><string>com.benchloop.dashboard</string>
+    <key>ProgramArguments</key>
+    <array>
+      <string>/bin/sh</string>
+      <string>-lc</string>
+      <string>{command}</string>
+    </array>
+    <key>RunAtLoad</key><true/>
+    <key>KeepAlive</key><true/>
+    <key>StandardOutPath</key><string>~/Library/Logs/benchloop-dashboard.log</string>
+    <key>StandardErrorPath</key><string>~/Library/Logs/benchloop-dashboard.err</string>
+  </dict>
+</plist>''')
+        elif service_template == "systemd":
+            click.echo(f'''[Unit]
+Description=BenchLoop dashboard
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/sh -lc '{command}'
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target''')
+        else:
+            click.echo(f'''# PowerShell Scheduled Task / startup command
+# Run this in a persistent shell or wrap it in Task Scheduler:
+{command}
+
+# Example Task Scheduler action:
+# Program/script: powershell.exe
+# Add arguments: -NoProfile -WindowStyle Hidden -Command "{command}"''')
+        return
 
     if dev:
         web_dir = Path(os.environ.get(

@@ -115,6 +115,14 @@ benchloop dashboard
 # → open http://127.0.0.1:8877
 ```
 
+Need it to survive browser/terminal churn? Print a service template instead of keeping the dashboard tied to one shell:
+
+```bash
+benchloop dashboard --service-template launchd
+benchloop dashboard --service-template systemd
+benchloop dashboard --service-template windows-task
+```
+
 This serves the Models, Benchmark, Leaderboard, Compare, and Chat tabs on a single port, with auto-discovered local providers (Ollama, LM Studio, MLX/Osaurus, vLLM, Jan).
 
 For hot-reload development against a clone of [`bench-loop-web`](https://github.com/outsourc-e/bench-loop-web):
