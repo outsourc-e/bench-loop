@@ -86,6 +86,26 @@ def info() -> None:
     type=float,
     help="GPU memory in GB to stamp on the run.",
 )
+@click.option(
+    "--profile-name",
+    default=None,
+    help="Optional public display name attached to published runs.",
+)
+@click.option(
+    "--profile-avatar-url",
+    default=None,
+    help="Optional avatar URL attached to published runs.",
+)
+@click.option(
+    "--profile-url",
+    default=None,
+    help="Optional profile URL attached to published runs.",
+)
+@click.option(
+    "--command-used",
+    default=None,
+    help="Optional launch command or config snippet to publish alongside the run.",
+)
 def run(
     model: str,
     endpoint: str,
@@ -95,6 +115,10 @@ def run(
     hardware: str | None,
     gpu: str | None,
     gpu_memory_gb: float | None,
+    profile_name: str | None,
+    profile_avatar_url: str | None,
+    profile_url: str | None,
+    command_used: str | None,
 ) -> None:
     """Run a benchmark."""
     # Auto-detect provider for common ports if the user left it as the default
@@ -104,7 +128,7 @@ def run(
         try:
             from urllib.parse import urlparse
             port = urlparse(endpoint).port
-            if port in {1234, 1337, 5001, 8000, 8080}:
+            if port in {1234, 1337, 5001, 8000, 8080, 8081}:
                 provider = "openai_compat"
                 click.echo(f"[auto-detected provider=openai_compat from port {port}]", err=True)
         except Exception:
@@ -118,6 +142,13 @@ def run(
         os.environ["BENCHLOOP_GPU"] = gpu
     if gpu_memory_gb is not None:
         os.environ["BENCHLOOP_GPU_MEMORY_GB"] = str(gpu_memory_gb)
+
+    publish_profile = {
+        "name": profile_name,
+        "avatar_url": profile_avatar_url,
+        "profile_url": profile_url,
+    }
+    command_used = (command_used or os.environ.get("BENCHLOOP_COMMAND_USED") or "").strip() or None
 
     selected_suites = [item.strip() for item in suites.split(",") if item.strip()]
     try:
@@ -172,7 +203,12 @@ def run(
             click.echo("Timeout. Try a smaller model, fewer suites, or check network stability.", err=True)
         raise SystemExit(1)
     print_run_report(benchmark)
-    save_run(benchmark, endpoint=endpoint)
+    save_run(
+        benchmark,
+        endpoint=endpoint,
+        publish_profile=publish_profile,
+        command_used=command_used,
+    )
 
 
 @main.command()
@@ -244,6 +280,9 @@ def export(output: str | None, include_all: bool) -> None:
             "agent_score": (suite_map.get("agent") or {}).get("score"),
             "agent_pass": (suite_map.get("agent") or {}).get("pass_count"),
             "agent_task_count": (suite_map.get("agent") or {}).get("task_count"),
+            "profile_name": ((data.get("profile") or {}).get("name") or ""),
+            "profile_avatar_url": ((data.get("profile") or {}).get("avatar_url") or ""),
+            "profile_url": ((data.get("profile") or {}).get("profile_url") or ""),
             "suites": {name: {"score": s.get("score", 0)} for name, s in suite_map.items()},
         }
 
@@ -274,7 +313,13 @@ def export(output: str | None, include_all: bool) -> None:
 @click.option("--ui-port", default=None, type=int, help="DEPRECATED. UI is now served by the API.")
 @click.option("--api-only", is_flag=True, help="Legacy flag, no-op now that UI is bundled.")
 @click.option("--dev/--no-dev", default=False, help="Use the sibling bench-loop-web repo with hot-reload (developer mode).")
-def dashboard(host: str, port: int, api_port: int | None, ui_port: int | None, api_only: bool, dev: bool) -> None:
+@click.option(
+    "--service-template",
+    type=click.Choice(["launchd", "systemd", "windows-task"], case_sensitive=False),
+    default=None,
+    help="Print a persistence template instead of launching the dashboard.",
+)
+def dashboard(host: str, port: int, api_port: int | None, ui_port: int | None, api_only: bool, dev: bool, service_template: str | None) -> None:
     """Launch the local web dashboard.
 
     By default this runs the bundled FastAPI + React app that ships inside the
@@ -291,6 +336,50 @@ def dashboard(host: str, port: int, api_port: int | None, ui_port: int | None, a
         port = api_port  # back-compat
     _ = ui_port  # ignored; bundled mode serves UI on `port`
     _ = api_only  # ignored; bundled mode is single-process
+
+    if service_template:
+        command = f"benchloop dashboard --host {host} --port {port}"
+        if service_template == "launchd":
+            click.echo(f'''<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>Label</key><string>com.benchloop.dashboard</string>
+    <key>ProgramArguments</key>
+    <array>
+      <string>/bin/sh</string>
+      <string>-lc</string>
+      <string>{command}</string>
+    </array>
+    <key>RunAtLoad</key><true/>
+    <key>KeepAlive</key><true/>
+    <key>StandardOutPath</key><string>~/Library/Logs/benchloop-dashboard.log</string>
+    <key>StandardErrorPath</key><string>~/Library/Logs/benchloop-dashboard.err</string>
+  </dict>
+</plist>''')
+        elif service_template == "systemd":
+            click.echo(f'''[Unit]
+Description=BenchLoop dashboard
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/bin/sh -lc '{command}'
+Restart=always
+RestartSec=5
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target''')
+        else:
+            click.echo(f'''# PowerShell Scheduled Task / startup command
+# Run this in a persistent shell or wrap it in Task Scheduler:
+{command}
+
+# Example Task Scheduler action:
+# Program/script: powershell.exe
+# Add arguments: -NoProfile -WindowStyle Hidden -Command "{command}"''')
+        return
 
     if dev:
         web_dir = Path(os.environ.get(

@@ -171,9 +171,10 @@ def _is_local_endpoint(endpoint: str | None) -> bool:
     if host not in {"", "localhost", "127.0.0.1", "::1"}:
         return False
     # Treat the standard Ollama port (11434), LM Studio (1234), MLX (8000),
-    # and vLLM (8080) on localhost as truly local. Any other localhost port
-    # is almost certainly a tunnel.
-    return port in {None, 11434, 1234, 8000, 8080, 1337, 5001}
+    # llama.cpp alternates (8080/8081), Jan (1337), and common OpenAI-compat
+    # local ports as truly local. Any other localhost port is still more likely
+    # to be a tunnel than the actual model host.
+    return port in {None, 11434, 1234, 1337, 5001, 8000, 8080, 8081}
 
 
 def _probe_remote_ollama_hardware(endpoint: str) -> dict[str, object] | None:
