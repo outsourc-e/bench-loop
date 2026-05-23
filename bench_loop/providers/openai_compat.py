@@ -155,9 +155,11 @@ async def chat_streaming(
 
     started = perf_counter()
     ttft_ms = 0.0
+    first_content_ms = 0.0
     content_chunks: list[str] = []
     completion_tokens = 0
     prompt_tokens = 0
+    reasoning_tokens = 0
     first_token_received = False
 
     try:
@@ -180,22 +182,31 @@ async def chat_streaming(
                     except (json.JSONDecodeError, ValueError):
                         continue
 
-                    # Capture usage from final chunk
+                    # Capture usage from final chunk (including reasoning breakdown)
                     usage = chunk.get("usage") or {}
                     if usage.get("completion_tokens"):
                         completion_tokens = int(usage["completion_tokens"])
                     if usage.get("prompt_tokens"):
                         prompt_tokens = int(usage["prompt_tokens"])
+                    details = usage.get("completion_tokens_details") or {}
+                    if details.get("reasoning_tokens"):
+                        reasoning_tokens = int(details["reasoning_tokens"])
 
-                    # Capture content
+                    # Capture content and reasoning
                     choices = chunk.get("choices") or []
                     if choices:
                         delta = choices[0].get("delta") or {}
                         text = delta.get("content") or ""
+                        reasoning_text = delta.get("reasoning_content") or ""
+
+                        # TTFT = first token the user sees (reasoning or content)
+                        if (text or reasoning_text) and not first_token_received:
+                            ttft_ms = (perf_counter() - started) * 1000.0
+                            first_token_received = True
+
                         if text:
-                            if not first_token_received:
-                                ttft_ms = (perf_counter() - started) * 1000.0
-                                first_token_received = True
+                            if not first_content_ms:
+                                first_content_ms = (perf_counter() - started) * 1000.0
                             content_chunks.append(text)
 
     except Exception as exc:
@@ -216,15 +227,19 @@ async def chat_streaming(
     elapsed_ms = (perf_counter() - started) * 1000.0
     content = "".join(content_chunks)
 
-    # Estimate tokens from content length if usage wasn't reported
-    if not completion_tokens and content:
-        completion_tokens = max(1, len(content.split()))
+    # Content tokens only (exclude reasoning) for effective throughput
+    content_tokens = completion_tokens - reasoning_tokens if completion_tokens > reasoning_tokens else 0
 
-    # Compute effective tok/s (excluding TTFT)
-    decode_time_ms = elapsed_ms - ttft_ms
+    # Estimate from content length if no token counts available
+    if not content_tokens and content:
+        content_tokens = max(1, len(content.split()))
+
+    # Effective tok/s = content tokens / (total time - first content token time)
+    # This measures visible output speed, excluding reasoning latency
+    content_decode_ms = (elapsed_ms - first_content_ms) if first_content_ms > 0 else (elapsed_ms - ttft_ms)
     gen_tok_per_sec = 0.0
-    if completion_tokens > 0 and decode_time_ms > 0:
-        gen_tok_per_sec = completion_tokens / (decode_time_ms / 1000.0)
+    if content_tokens > 0 and content_decode_ms > 0:
+        gen_tok_per_sec = content_tokens / (content_decode_ms / 1000.0)
 
     return {
         "content": content,
