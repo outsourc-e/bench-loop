@@ -113,6 +113,7 @@ class BenchmarkRun:
     provider: str = "ollama"
     harness: str = "raw"
     harness_version: str = ""
+    is_remote: bool = False
     total_runtime_sec: float = 0.0
     overall_score: float = 0.0
     quality_score: float = 0.0
@@ -139,11 +140,19 @@ class BenchmarkRun:
         total_passed = sum(s.pass_count for s in self.suites.values())
         self.reliability_score = (total_passed / total_tasks * 100) if total_tasks > 0 else 0.0
 
-        self.overall_score = (
-            0.55 * self.quality_score
-            + 0.20 * self.speed_score
-            + 0.25 * self.reliability_score
-        )
+        if self.is_remote:
+            # Remote/cloud: speed (local tok/s) is not meaningful, so
+            # redistribute its weight to quality and reliability.
+            self.overall_score = (
+                0.65 * self.quality_score
+                + 0.35 * self.reliability_score
+            )
+        else:
+            self.overall_score = (
+                0.55 * self.quality_score
+                + 0.20 * self.speed_score
+                + 0.25 * self.reliability_score
+            )
 
         speed_factor = (
             min(self.speed_metrics.generation_tok_per_sec / 100, 1.0)

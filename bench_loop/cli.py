@@ -106,6 +106,12 @@ def info() -> None:
     default=None,
     help="Optional launch command or config snippet to publish alongside the run.",
 )
+@click.option(
+    "--remote",
+    is_flag=True,
+    default=False,
+    help="Mark as remote/cloud benchmark. Skips local speed scoring (tok/s) since cloud inference throughput isn't comparable to local hardware.",
+)
 def run(
     model: str,
     endpoint: str,
@@ -119,6 +125,7 @@ def run(
     profile_avatar_url: str | None,
     profile_url: str | None,
     command_used: str | None,
+    remote: bool,
 ) -> None:
     """Run a benchmark."""
     # Auto-detect provider for common ports if the user left it as the default
@@ -159,6 +166,7 @@ def run(
                 provider=provider,
                 suites=selected_suites,
                 harness=harness,
+                remote=remote,
             )
         )
     except ValueError as exc:
