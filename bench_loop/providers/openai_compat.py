@@ -1,6 +1,7 @@
 """OpenAI-compatible provider implementation."""
 from __future__ import annotations
 
+import json
 import os
 from time import perf_counter
 from typing import Any
@@ -11,6 +12,7 @@ import httpx
 # Long generations (27B+ at high context) routinely take > 60s.
 TIMEOUT_SECONDS = 600.0
 _HTTP_TIMEOUT = httpx.Timeout(connect=15.0, read=600.0, write=60.0, pool=60.0)
+_STREAM_TIMEOUT = httpx.Timeout(connect=15.0, read=600.0, write=60.0, pool=60.0)
 
 
 def _auth_headers() -> dict[str, str]:
@@ -119,4 +121,122 @@ async def chat(endpoint: str, model: str, messages: list[dict[str, Any]], **kwar
         "generation_tok_per_sec": gen_tok_per_sec,
         "error": "",
         "reasoning_content": reasoning,
+    }
+
+
+async def chat_streaming(
+    endpoint: str,
+    model: str,
+    messages: list[dict[str, Any]],
+    **kwargs: Any,
+) -> dict[str, Any]:
+    """Streaming chat that measures TTFT (time-to-first-token) and inter-token latency.
+
+    Use this for cloud/remote speed benchmarks where local tok/s isn't meaningful.
+    Falls back to non-streaming if the endpoint doesn't support streaming.
+    """
+    base_url = endpoint.rstrip("/")
+    payload: dict[str, Any] = {
+        "model": model,
+        "messages": [dict(message) for message in messages],
+        "max_tokens": int(kwargs.get("max_tokens") or 2048),
+        "temperature": float(kwargs.get("temperature") or 0.0),
+        "stream": True,
+        "stream_options": {"include_usage": True},
+    }
+    for k in ("top_p", "top_k", "min_p", "repetition_penalty", "presence_penalty", "frequency_penalty", "stop"):
+        if kwargs.get(k) is not None:
+            payload[k] = kwargs[k]
+    if kwargs.get("tools"):
+        payload["tools"] = kwargs["tools"]
+        payload.pop("stream", None)  # tool calls don't stream well
+        payload.pop("stream_options", None)
+        return await chat(endpoint, model, messages, **kwargs)
+
+    started = perf_counter()
+    ttft_ms = 0.0
+    content_chunks: list[str] = []
+    completion_tokens = 0
+    prompt_tokens = 0
+    first_token_received = False
+
+    try:
+        async with httpx.AsyncClient(timeout=_STREAM_TIMEOUT) as client:
+            async with client.stream(
+                "POST",
+                f"{base_url}/v1/chat/completions",
+                json=payload,
+                headers=_auth_headers(),
+            ) as response:
+                response.raise_for_status()
+                async for line in response.aiter_lines():
+                    if not line.startswith("data: "):
+                        continue
+                    data_str = line[6:].strip()
+                    if data_str == "[DONE]":
+                        break
+                    try:
+                        chunk = json.loads(data_str)
+                    except (json.JSONDecodeError, ValueError):
+                        continue
+
+                    # Capture usage from final chunk
+                    usage = chunk.get("usage") or {}
+                    if usage.get("completion_tokens"):
+                        completion_tokens = int(usage["completion_tokens"])
+                    if usage.get("prompt_tokens"):
+                        prompt_tokens = int(usage["prompt_tokens"])
+
+                    # Capture content
+                    choices = chunk.get("choices") or []
+                    if choices:
+                        delta = choices[0].get("delta") or {}
+                        text = delta.get("content") or ""
+                        if text:
+                            if not first_token_received:
+                                ttft_ms = (perf_counter() - started) * 1000.0
+                                first_token_received = True
+                            content_chunks.append(text)
+
+    except Exception as exc:
+        return {
+            "content": "",
+            "tool_calls": [],
+            "raw_response": {},
+            "tokens_prompt": 0,
+            "tokens_generated": 0,
+            "ttft_ms": 0.0,
+            "total_ms": (perf_counter() - started) * 1000.0,
+            "model": model,
+            "prompt_eval_tok_per_sec": 0.0,
+            "generation_tok_per_sec": 0.0,
+            "error": str(exc),
+        }
+
+    elapsed_ms = (perf_counter() - started) * 1000.0
+    content = "".join(content_chunks)
+
+    # Estimate tokens from content length if usage wasn't reported
+    if not completion_tokens and content:
+        completion_tokens = max(1, len(content.split()))
+
+    # Compute effective tok/s (excluding TTFT)
+    decode_time_ms = elapsed_ms - ttft_ms
+    gen_tok_per_sec = 0.0
+    if completion_tokens > 0 and decode_time_ms > 0:
+        gen_tok_per_sec = completion_tokens / (decode_time_ms / 1000.0)
+
+    return {
+        "content": content,
+        "tool_calls": [],
+        "raw_response": {},
+        "tokens_prompt": prompt_tokens,
+        "tokens_generated": completion_tokens,
+        "ttft_ms": ttft_ms,
+        "total_ms": elapsed_ms,
+        "model": model,
+        "prompt_eval_tok_per_sec": 0.0,
+        "generation_tok_per_sec": gen_tok_per_sec,
+        "error": "",
+        "reasoning_content": "",
     }

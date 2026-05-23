@@ -159,6 +159,7 @@ async def run_benchmark(
                     task,
                     harness=harness_adapter,
                     provider_name=provider,
+                    remote=remote,
                 )
             else:
                 result = await suite.run_task(
@@ -250,6 +251,7 @@ async def _run_speed_task(
     task: Any,
     harness: Any | None = None,
     provider_name: str = "ollama",
+    remote: bool = False,
 ) -> TaskResult:
     trial_results: list[TaskResult] = []
     request = (
@@ -257,12 +259,23 @@ async def _run_speed_task(
         if harness is not None
         else {"messages": task.messages, **task.config}
     )
+
+    # Use streaming for remote/cloud to get real TTFT + tok/s
+    use_streaming = remote and hasattr(provider_module, "chat_streaming")
+
     for _ in range(SPEED_TRIALS):
-        response = await provider_module.chat(
-            endpoint=endpoint,
-            model=model,
-            **request,
-        )
+        if use_streaming:
+            response = await provider_module.chat_streaming(
+                endpoint=endpoint,
+                model=model,
+                **request,
+            )
+        else:
+            response = await provider_module.chat(
+                endpoint=endpoint,
+                model=model,
+                **request,
+            )
         if harness is not None:
             response = harness.postprocess(response, task)
         trial_results.append(suite.evaluate(task, response))

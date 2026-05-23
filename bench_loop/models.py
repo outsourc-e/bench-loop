@@ -141,12 +141,20 @@ class BenchmarkRun:
         self.reliability_score = (total_passed / total_tasks * 100) if total_tasks > 0 else 0.0
 
         if self.is_remote:
-            # Remote/cloud: speed (local tok/s) is not meaningful, so
-            # redistribute its weight to quality and reliability.
-            self.overall_score = (
-                0.65 * self.quality_score
-                + 0.35 * self.reliability_score
-            )
+            # Remote/cloud: use cloud-aware speed scoring when available.
+            # If speed suite has data (from streaming TTFT + tok/s), include it.
+            if self.speed_score > 0:
+                self.overall_score = (
+                    0.50 * self.quality_score
+                    + 0.25 * self.speed_score
+                    + 0.25 * self.reliability_score
+                )
+            else:
+                # No speed data — fall back to quality + reliability only
+                self.overall_score = (
+                    0.65 * self.quality_score
+                    + 0.35 * self.reliability_score
+                )
         else:
             self.overall_score = (
                 0.55 * self.quality_score

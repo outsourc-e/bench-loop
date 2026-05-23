@@ -115,9 +115,10 @@ def render_run_summary(run: BenchmarkRun) -> None:
     _summary_rule("Summary")
     console.print()
     if run.is_remote:
-        rows = [
+        speed_label = f"{run.speed_score:.1f}" if run.speed_score > 0 else "N/A (no stream)"
+        rows: list[tuple[str, Any]] = [
             ("QUALITY", run.quality_score),
-            ("SPEED", "N/A (cloud)"),
+            ("SPEED", speed_label),
             ("RELIABILITY", run.reliability_score),
             ("VALUE", run.value_score),
         ]
@@ -126,6 +127,8 @@ def render_run_summary(run: BenchmarkRun) -> None:
                 console.print(f"  [{ACCENT}]{label:<14}[/{ACCENT}][{DIM}]│[/{DIM}]  [{DIM}]{val}[/{DIM}]")
             else:
                 console.print(f"  [{ACCENT}]{label:<14}[/{ACCENT}][{DIM}]│[/{DIM}]  {val:.1f}")
+        if run.speed_metrics.ttft_ms > 0:
+            console.print(f"  [{DIM}]TTFT: {run.speed_metrics.ttft_ms:.0f}ms | tok/s: {run.speed_metrics.generation_tok_per_sec:.1f}[/{DIM}]")
     else:
         rows = [
             ("QUALITY", run.quality_score),
