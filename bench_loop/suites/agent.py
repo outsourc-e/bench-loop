@@ -190,6 +190,47 @@ TOOL_IMPL = {
 
 
 # --------------------------------------------------------------------------- #
+# Verification helpers                                                        #
+# --------------------------------------------------------------------------- #
+def _needle_matches(needle: Any, final_lower: str, final_stripped: str) -> bool:
+    """Check if an expected_contains needle matches the model's final answer.
+
+    Tries in order:
+    1. Literal substring match (case-insensitive)
+    2. Substring match after stripping $, €, £, commas
+    3. Approximate numeric match (within ±1 for rounding tolerance)
+    """
+    needle_str = str(needle).lower()
+
+    # 1. Literal match
+    if needle_str in final_lower:
+        return True
+
+    # 2. Stripped match (handles "$3,948" containing "3948")
+    needle_stripped = needle_str.replace("$", "").replace(",", "").replace("€", "").replace("£", "")
+    if needle_stripped in final_stripped:
+        return True
+
+    # 3. Approximate numeric match — extract numbers from the answer and
+    #    check if any is within ±1 of the expected value (rounding tolerance).
+    try:
+        expected_val = float(needle_stripped)
+    except (ValueError, TypeError):
+        return False
+
+    # Find all decimal numbers in the stripped answer
+    for match in re.finditer(r"\d+(?:\.\d+)?", final_stripped):
+        try:
+            found_val = float(match.group())
+            if abs(found_val - expected_val) <= 1.0:
+                return True
+        except (ValueError, TypeError):
+            continue
+
+    return False
+
+
+# --------------------------------------------------------------------------- #
 # Agent loop                                                                   #
 # --------------------------------------------------------------------------- #
 @dataclass
@@ -234,8 +275,11 @@ class AgentSuite(BenchmarkSuite):
 
         # Criteria — each worth 25 pts.
         final_lower = (trace.final_answer or "").lower()
+        # Strip common numeric formatting ($, commas) for fuzzy matching.
+        # This handles models that write "$3,948" when expected_contains has "3948".
+        final_stripped = final_lower.replace("$", "").replace(",", "").replace("€", "").replace("£", "")
         correct_final = bool(expected_contains) and all(
-            str(needle).lower() in final_lower for needle in expected_contains
+            _needle_matches(needle, final_lower, final_stripped) for needle in expected_contains
         )
         efficient = trace.completed and len(trace.turns) <= max_turns * 2  # user+assistant per turn
         no_hallucination = len(trace.hallucinated_tools) == 0
