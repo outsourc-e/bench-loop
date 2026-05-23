@@ -12,9 +12,9 @@
 
 **Benchmark local LLMs by what actually matters.**
 
-BenchLoop is a local-first CLI + web app for benchmarking LLMs running on your own hardware. It scores models across seven repeatable suites — quality, speed, reliability, agentic tool use, coding, instruction following — and gives you receipts: per-task outputs, latency, token counts, machine info, scores.
+BenchLoop is a local-first CLI + web app for benchmarking LLMs running on your own hardware or cloud providers. It scores models across seven repeatable suites — quality, speed, reliability, agentic tool use, coding, instruction following — and gives you receipts: per-task outputs, latency, token counts, machine info, scores.
 
-No accounts, no telemetry, no API keys. Your model, your machine, your numbers.
+No accounts, no telemetry. Local models need no API keys; cloud providers use standard OpenAI-compatible auth. Your model, your machine (or your provider), your numbers.
 
 ```
 $ benchloop run --model qwen3:8b --suites speed,toolcall,agent
@@ -106,6 +106,48 @@ benchloop run \
   --gpu-memory-gb 24
 ```
 
+### Benchmark cloud/remote APIs
+
+Works with any OpenAI-compatible endpoint — DashScope, OpenRouter, Together, OpenAI, vLLM with auth, sglang, etc.
+
+```bash
+# Via environment variable
+export OPENAI_API_KEY="sk-..."
+benchloop run \
+  --model qwen3.7-max \
+  --provider openai_compat \
+  --endpoint https://dashscope-intl.aliyuncs.com/compatible-mode \
+  --remote
+
+# Or inline
+benchloop run \
+  --model gpt-4o \
+  --provider openai_compat \
+  --endpoint https://api.openai.com/v1 \
+  --api-key sk-... \
+  --remote
+```
+
+The `--remote` flag (auto-detected for non-localhost endpoints) switches to cloud-aware scoring:
+- **Speed** uses streaming TTFT (time-to-first-token) + effective content tok/s
+- **Overall** = 0.50·quality + 0.25·speed + 0.25·reliability (vs local's 0.55/0.20/0.25)
+- Reasoning models: content tok/s excludes internal thinking tokens
+
+### API key auth
+
+Required for vLLM, sglang, and most cloud providers. Two ways to provide it:
+
+```bash
+# 1. Environment variable (recommended)
+export OPENAI_API_KEY="your-key-here"
+benchloop run --model your-model --provider openai_compat --endpoint http://your-server:8000
+
+# 2. CLI flag
+benchloop run --model your-model --provider openai_compat --endpoint http://your-server:8000 --api-key your-key-here
+```
+
+The CLI flag takes precedence over the env var. For Ollama and local providers without auth, neither is needed.
+
 ### Launch the local dashboard
 
 v0.2.0+ ships the full FastAPI + React dashboard inside the wheel. After `pipx install benchloop-cli`:
@@ -146,11 +188,14 @@ benchloop dashboard --dev
 ## Scoring
 
 ```
-Overall = 0.55 · quality + 0.20 · speed + 0.25 · reliability
+Local:  Overall = 0.55 · quality + 0.20 · speed + 0.25 · reliability
+Cloud:  Overall = 0.50 · quality + 0.25 · speed + 0.25 · reliability  (with streaming speed data)
+        Overall = 0.65 · quality + 0.35 · reliability                   (no speed data)
 ```
 
 - **Quality** = mean of non-speed suite scores (size-fair).
-- **Speed** = `12.54 · log2(tok/s) + 0.9`, clamped to 0–100.
+- **Speed (local)** = `12.54 · log2(tok/s) + 0.9`, clamped to 0–100.
+- **Speed (cloud)** = 0.60 · TTFT_score + 0.40 · tok/s_score, where TTFT uses exponential decay (200ms→100, 2000ms→40) and tok/s uses a log curve calibrated for 20-150 tok/s.
 - **Reliability** = pass rate across all tasks.
 - **Agent** = `correct_final + efficient + no_hallucinated_tools + all_required_called`, 25 pts each, averaged across tasks.
 
@@ -199,11 +244,12 @@ bench-loop-web/                ← the web app (separate repo)
 
 ## Status
 
-BenchLoop is **v0.1 beta**. The benchmark surface, scoring, web app, agent loop, and four harnesses all work end-to-end. Stuff still on the roadmap:
+BenchLoop is **v0.2 beta**. The benchmark surface, scoring, web app, agent loop, four harnesses, and cloud provider support all work end-to-end. Stuff still on the roadmap:
 
-- Streaming TTFT for OpenAI-compatible providers (currently 0 on those backends — ollama TTFT is fine)
+- ~~Streaming TTFT for OpenAI-compatible providers~~ ✅ (v0.2.3+ with `--remote`)
 - Bigger task fixtures (each suite is intentionally small and frozen for v1)
 - Hosted submission flow for community runs
+- Cloud-specific leaderboard on bench-loop.com (filter by local vs remote)
 - More provider adapters (TGI, Bedrock, etc. if there's demand)
 
 ## License

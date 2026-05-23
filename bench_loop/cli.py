@@ -112,6 +112,11 @@ def info() -> None:
     default=False,
     help="Mark as remote/cloud benchmark. Skips local speed scoring (tok/s) since cloud inference throughput isn't comparable to local hardware.",
 )
+@click.option(
+    "--api-key",
+    default=None,
+    help="API key for the endpoint. Also reads OPENAI_API_KEY env var. Required for vLLM, sglang, and most cloud providers.",
+)
 def run(
     model: str,
     endpoint: str,
@@ -126,8 +131,12 @@ def run(
     profile_url: str | None,
     command_used: str | None,
     remote: bool,
+    api_key: str | None,
 ) -> None:
     """Run a benchmark."""
+    # Set API key from CLI flag if provided (takes precedence over env var)
+    if api_key:
+        os.environ["OPENAI_API_KEY"] = api_key
     # Auto-detect provider for common ports if the user left it as the default
     # 'ollama' but pointed at an OpenAI-compatible server. LM Studio (:1234),
     # vLLM (:8000), llama.cpp's server (:8080), Jan (:1337), Osaurus, oMLX.
