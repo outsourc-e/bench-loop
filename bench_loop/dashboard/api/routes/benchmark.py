@@ -352,7 +352,9 @@ async def get_run(run_id: str):
     """Get detailed run result."""
     # Check active runs first
     if run_id in _active_runs:
-        return _active_runs[run_id]
+        state = dict(_active_runs[run_id])
+        state.pop("task", None)
+        return state
 
     # Check disk
     run_dir = RUNS_DIR / run_id

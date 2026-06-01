@@ -92,6 +92,16 @@ def _env_hardware_overrides() -> dict[str, object]:
     return overrides
 
 
+def _parse_nvidia_float(value: str) -> float | None:
+    cleaned = value.strip()
+    if not cleaned or cleaned.upper() == "[N/A]":
+        return None
+    try:
+        return float(cleaned)
+    except ValueError:
+        return None
+
+
 def _detect_gpu() -> dict[str, object]:
     overrides = _env_hardware_overrides()
     if overrides.get("gpu") or overrides.get("hardware_label"):
@@ -133,8 +143,9 @@ def _detect_gpu() -> dict[str, object]:
         if len(parts) < 3:
             continue
         name, memory_mb, temp_c = parts[0], parts[1], parts[2]
-        memory_gb = float(memory_mb) / 1024 if memory_mb else 0.0
-        temperature = float(temp_c) if temp_c else None
+        memory_value = _parse_nvidia_float(memory_mb)
+        temperature = _parse_nvidia_float(temp_c)
+        memory_gb = memory_value / 1024 if memory_value is not None else 0.0
         details.append({"name": name, "memory_gb": memory_gb, "temperature_c": temperature})
         names.append(name)
         total_memory_gb += memory_gb
