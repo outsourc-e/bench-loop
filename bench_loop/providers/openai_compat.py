@@ -15,9 +15,20 @@ _HTTP_TIMEOUT = httpx.Timeout(connect=15.0, read=600.0, write=60.0, pool=60.0)
 _STREAM_TIMEOUT = httpx.Timeout(connect=15.0, read=600.0, write=60.0, pool=60.0)
 
 
-def _auth_headers() -> dict[str, str]:
+def _api_key_for_endpoint(endpoint: str) -> str:
+    ep = endpoint.rstrip("/")
+    raw = os.getenv("BENCHLOOP_OPENAI_KEYS", "").strip()
+    if raw:
+        for chunk in raw.split(","):
+            url, sep, key = chunk.partition("=")
+            if sep and url.strip().rstrip("/") == ep:
+                return key.strip()
+    return os.getenv("OPENAI_API_KEY", "").strip()
+
+
+def _auth_headers(endpoint: str) -> dict[str, str]:
     headers = {"Content-Type": "application/json"}
-    api_key = os.getenv("OPENAI_API_KEY", "")
+    api_key = _api_key_for_endpoint(endpoint)
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
     return headers
@@ -27,7 +38,7 @@ async def list_models(endpoint: str) -> list[str]:
     base_url = endpoint.rstrip("/")
     try:
         async with httpx.AsyncClient(timeout=_HTTP_TIMEOUT) as client:
-            response = await client.get(f"{base_url}/v1/models", headers=_auth_headers())
+            response = await client.get(f"{base_url}/v1/models", headers=_auth_headers(endpoint))
             response.raise_for_status()
     except Exception:
         return []
@@ -63,7 +74,7 @@ async def chat(endpoint: str, model: str, messages: list[dict[str, Any]], **kwar
             response = await client.post(
                 f"{base_url}/v1/chat/completions",
                 json=payload,
-                headers=_auth_headers(),
+                headers=_auth_headers(endpoint),
             )
             response.raise_for_status()
     except Exception as exc:
@@ -168,7 +179,7 @@ async def chat_streaming(
                 "POST",
                 f"{base_url}/v1/chat/completions",
                 json=payload,
-                headers=_auth_headers(),
+                headers=_auth_headers(endpoint),
             ) as response:
                 response.raise_for_status()
                 async for line in response.aiter_lines():

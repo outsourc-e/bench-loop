@@ -11,6 +11,8 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 import httpx
 
+from bench_loop.providers.openai_compat import _auth_headers as _openai_headers
+
 try:
     from sse_starlette.sse import EventSourceResponse
 except Exception:  # pragma: no cover
@@ -195,7 +197,7 @@ async def _fetch_ollama_models(endpoint: str) -> list[dict]:
 async def _fetch_openai_models(endpoint: str) -> list[dict]:
     """Fetch models from an OpenAI-compatible endpoint."""
     async with httpx.AsyncClient(timeout=5) as client:
-        resp = await client.get(f"{endpoint.rstrip('/')}/v1/models")
+        resp = await client.get(f"{endpoint.rstrip('/')}/v1/models", headers=_openai_headers(endpoint))
         resp.raise_for_status()
     raw = resp.json().get("data", [])
     return [
@@ -232,7 +234,19 @@ async def _probe_provider(provider: dict) -> dict | None:
         return None
 
 
-_OPENAI_HINT_PORTS = {1234, 1337, 5001, 8000, 8080, 8081}
+_OPENAI_HINT_PORTS = {1234, 1337, 5001, 8000, 8080, 8081, 8088, 10531, 11451}
+_OPENAI_HINT_HOSTS = {"api.openai.com", "openrouter.ai"}
+
+
+def _is_openai_compat_endpoint(endpoint: str) -> bool:
+    from urllib.parse import urlparse
+
+    try:
+        parsed = urlparse(endpoint if "://" in endpoint else f"http://{endpoint}")
+    except Exception:
+        return False
+    hostname = (parsed.hostname or "").lower()
+    return parsed.port in _OPENAI_HINT_PORTS or hostname in _OPENAI_HINT_HOSTS
 
 
 @router.get("/models")
@@ -240,12 +254,7 @@ async def list_models(endpoint: str = Query(default="")):
     """List models. If endpoint specified, query that. Otherwise auto-detect local providers."""
     if endpoint:
         # If the port is well-known for OpenAI-compatible servers, try that first.
-        from urllib.parse import urlparse
-        try:
-            port = urlparse(endpoint).port
-        except Exception:
-            port = None
-        order: list[str] = ["openai", "ollama"] if port in _OPENAI_HINT_PORTS else ["ollama", "openai"]
+        order: list[str] = ["openai", "ollama"] if _is_openai_compat_endpoint(endpoint) else ["ollama", "openai"]
         last_error: str | None = None
         for kind in order:
             try:
@@ -307,39 +316,68 @@ async def preflight_model(
     """
     ep = endpoint.rstrip("/")
 
-    # Version check against our support table (fast path, no model load needed)
-    version = await _fetch_ollama_version(ep)
-    installed_tuple = _version_tuple(version) if version else (0,)
-    # We don't have the details dict for an arbitrary model name — do a best
-    # effort classification from the name alone.
-    support = _classify_model_support(model, {"family": "", "quantization_level": ""})
-    required = support["required_version"]
-    if required and installed_tuple < _version_tuple(required):
-        return {
-            "ok": False,
-            "reason": "version_mismatch",
-            "message": (
-                f"Model `{model}` needs Ollama {required}+ ({support['reason']}). "
-                f"Installed: {version or 'unknown'}. Upgrade with "
-                f"`brew upgrade ollama` then restart `ollama serve`."
-            ),
-            "required_version": required,
-            "provider_version": version,
-            "raw": None,
-        }
+    is_openai_compat = _is_openai_compat_endpoint(ep)
+
+    # Ollama version checks only apply to Ollama endpoints. OpenAI-compatible
+    # servers such as llama.cpp/vLLM do not expose /api/version and should not
+    # be blocked by Ollama architecture/version rules.
+    version = None
+    if not is_openai_compat:
+        version = await _fetch_ollama_version(ep)
+        installed_tuple = _version_tuple(version) if version else (0,)
+        # We don't have the details dict for an arbitrary model name — do a best
+        # effort classification from the name alone.
+        support = _classify_model_support(model, {"family": "", "quantization_level": ""})
+        required = support["required_version"]
+        if required and installed_tuple < _version_tuple(required):
+            return {
+                "ok": False,
+                "reason": "version_mismatch",
+                "message": (
+                    f"Model `{model}` needs Ollama {required}+ ({support['reason']}). "
+                    f"Installed: {version or 'unknown'}. Upgrade with "
+                    f"`brew upgrade ollama` then restart `ollama serve`."
+                ),
+                "required_version": required,
+                "provider_version": version,
+                "raw": None,
+            }
 
     # Actual load test: minimum-cost chat round-trip
     try:
         async with httpx.AsyncClient(timeout=15) as client:
-            resp = await client.post(
-                f"{ep}/api/chat",
-                json={
-                    "model": model,
-                    "messages": [{"role": "user", "content": "ok"}],
-                    "stream": False,
-                    "options": {"num_predict": 1},
-                },
-            )
+            if is_openai_compat:
+                resp = await client.post(
+                    f"{ep}/v1/chat/completions",
+                    json={
+                        "model": model,
+                        "messages": [{"role": "user", "content": "ok"}],
+                        "stream": False,
+                        "max_tokens": 16,
+                    },
+                    headers=_openai_headers(ep),
+                )
+            else:
+                resp = await client.post(
+                    f"{ep}/api/chat",
+                    json={
+                        "model": model,
+                        "messages": [{"role": "user", "content": "ok"}],
+                        "stream": False,
+                        "options": {"num_predict": 1},
+                    },
+                )
+    except httpx.ReadTimeout as exc:
+        return {
+            "ok": True,
+            "reason": "load_timeout",
+            "message": (
+                f"Model `{model}` did not answer within the quick preflight window. "
+                "Continuing with the benchmark so large models can finish loading normally."
+            ),
+            "raw": str(exc),
+            "provider_version": version,
+        }
     except httpx.HTTPError as exc:
         return {
             "ok": False,
@@ -386,6 +424,14 @@ async def preflight_model(
         }
 
     if "model" in lower and "not found" in lower:
+        if is_openai_compat:
+            return {
+                "ok": False,
+                "reason": "not_found",
+                "message": f"`{model}` is not available at {ep}. Check the model id from `/v1/models`.",
+                "raw": raw,
+                "provider_version": version,
+            }
         return {
             "ok": False,
             "reason": "not_found",

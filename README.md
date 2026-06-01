@@ -148,6 +148,17 @@ benchloop run --model your-model --provider openai_compat --endpoint http://your
 
 The CLI flag takes precedence over the env var. For Ollama and local providers without auth, neither is needed.
 
+When you use multiple OpenAI-compatible endpoints, set per-endpoint keys with
+`BENCHLOOP_OPENAI_KEYS`. Entries are comma-separated `endpoint=key` pairs and
+the endpoint must match the base URL without a trailing slash:
+
+```bash
+export BENCHLOOP_OPENAI_KEYS="http://127.0.0.1:8000=sk-local,https://openrouter.ai/api=sk-or-..."
+```
+
+BenchLoop uses the matching endpoint-specific key first, then falls back to
+`OPENAI_API_KEY`.
+
 ### Launch the local dashboard
 
 v0.2.0+ ships the full FastAPI + React dashboard inside the wheel. After `pipx install benchloop-cli`:

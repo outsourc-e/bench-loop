@@ -8,6 +8,8 @@ import httpx
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
+from bench_loop.providers.openai_compat import _auth_headers as _openai_headers
+
 router = APIRouter()
 
 
@@ -61,6 +63,7 @@ async def chat_generate(req: ChatRequest):
                 resp = await client.post(
                     f"{req.endpoint.rstrip('/')}/v1/chat/completions",
                     json=payload,
+                    headers=_openai_headers(req.endpoint),
                 )
                 resp.raise_for_status()
                 data = resp.json()
