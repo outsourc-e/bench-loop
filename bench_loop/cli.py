@@ -303,13 +303,18 @@ def run(
         elif "timeout" in msg.lower() or type_name == "ReadTimeout":
             click.echo("Timeout. Try a smaller model, fewer suites, or check network stability.", err=True)
         raise SystemExit(1)
-    print_run_report(benchmark)
+    # Save before printing -- a console-rendering crash (e.g. legacy Windows
+    # cp1252 terminals choking on an emoji) must not cost the whole run's data.
     save_run(
         benchmark,
         endpoint=endpoint,
         publish_profile=publish_profile,
         command_used=command_used,
     )
+    try:
+        print_run_report(benchmark)
+    except Exception as exc:  # noqa: BLE001
+        click.echo(f"(report rendering failed: {exc}; run was already saved)", err=True)
 
 
 @main.command()
