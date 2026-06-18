@@ -40,6 +40,7 @@ async def run_benchmark(
     runs: int | None = None,  # accepted but currently unused (single-run)
     timeout_sec: float | None = None,  # accepted but unused
     remote: bool = False,  # mark as remote/cloud benchmark
+    max_tokens: int | None = None,  # override every task's fixture max_tokens
 ) -> BenchmarkRun:
     # API back-compat: allow `run_benchmark(config)` where config has
     # the same attributes (model/endpoint/provider/suite_names/harness/...).
@@ -51,6 +52,7 @@ async def run_benchmark(
         cfg_suites = getattr(cfg, "suite_names", None) or getattr(cfg, "suites", None)
         suites = cfg_suites or suites
         harness = getattr(cfg, "harness", None) or harness
+        max_tokens = getattr(cfg, "max_tokens", None) or max_tokens
     elif suite_names and not suites:
         suites = suite_names
 
@@ -160,6 +162,7 @@ async def run_benchmark(
                     harness=harness_adapter,
                     provider_name=provider,
                     remote=remote,
+                    max_tokens_override=max_tokens,
                 )
             else:
                 result = await suite.run_task(
@@ -169,6 +172,7 @@ async def run_benchmark(
                     task,
                     harness=harness_adapter,
                     provider_name=provider,
+                    max_tokens_override=max_tokens,
                 )
             task_results.append(result)
             speed_meta = result.metadata.get("speed_metrics") if isinstance(result.metadata, dict) else None
@@ -252,6 +256,7 @@ async def _run_speed_task(
     harness: Any | None = None,
     provider_name: str = "ollama",
     remote: bool = False,
+    max_tokens_override: int | None = None,
 ) -> TaskResult:
     trial_results: list[TaskResult] = []
     request = (
@@ -259,6 +264,8 @@ async def _run_speed_task(
         if harness is not None
         else {"messages": task.messages, **task.config}
     )
+    if max_tokens_override is not None:
+        request["max_tokens"] = max_tokens_override
 
     # Use streaming for remote/cloud to get real TTFT + tok/s
     use_streaming = remote and hasattr(provider_module, "chat_streaming")

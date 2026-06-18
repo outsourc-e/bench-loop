@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +18,83 @@ ARRAY_OBJECT_ANCHORS = {
     "DE-13.line_items": "description",
     "DE-13.discounts": "description",
 }
+
+_JSON_FENCE_RE = re.compile(r"```(?:json)?\s*(.*?)```", re.DOTALL | re.IGNORECASE)
+
+
+def _find_matching_bracket(text: str, start: int) -> int | None:
+    """Return the index of the bracket that closes `text[start]`, string-aware."""
+    depth = 0
+    in_string = False
+    escape = False
+    for index in range(start, len(text)):
+        ch = text[index]
+        if in_string:
+            if escape:
+                escape = False
+            elif ch == "\\":
+                escape = True
+            elif ch == '"':
+                in_string = False
+            continue
+        if ch == '"':
+            in_string = True
+        elif ch in "{[":
+            depth += 1
+        elif ch in "}]":
+            depth -= 1
+            if depth == 0:
+                return index
+    return None
+
+
+def extract_json(text: str) -> tuple[Any, str]:
+    """Best-effort JSON extraction from a model response.
+
+    Returns (parsed_value, method). method == "none" means nothing parseable
+    was found -- callers should treat that (not a parsed `None`) as failure,
+    since these fixtures never expect a bare top-level `null`.
+
+    A strict `json.loads` on the whole response fails the moment a thinking
+    model's response has so much as a stray "Sure, here's the JSON:" in
+    front of it (or unclosed reasoning dumped in ahead of the real answer --
+    see openai_compat.py's reasoning-to-content fallback). This recovers the
+    JSON object/array from inside that surrounding text instead of scoring 0
+    outright, the same way coding.py already tolerates prose around a code
+    fence.
+    """
+    if not text:
+        return None, "none"
+    stripped = text.strip()
+    if not stripped:
+        return None, "none"
+
+    try:
+        return json.loads(stripped), "direct"
+    except Exception:
+        pass
+
+    fence_match = _JSON_FENCE_RE.search(stripped)
+    if fence_match:
+        candidate = fence_match.group(1).strip()
+        try:
+            return json.loads(candidate), "fenced"
+        except Exception:
+            pass
+
+    for start, ch in enumerate(stripped):
+        if ch not in "{[":
+            continue
+        end = _find_matching_bracket(stripped, start)
+        if end is None:
+            continue
+        candidate = stripped[start : end + 1]
+        try:
+            return json.loads(candidate), "bracket_scan"
+        except Exception:
+            continue
+
+    return None, "none"
 
 
 class DataExtractSuite(BenchmarkSuite):
@@ -172,23 +250,23 @@ class DataExtractSuite(BenchmarkSuite):
         response_text = self.response_text(response)
         expected = task.validation.get("expected")
         scenario_id = str(task.validation.get("scenario_id") or task.id.upper())
-        try:
-            parsed = json.loads(response_text)
-        except Exception as exc:
+        parsed, extraction_method = extract_json(response_text)
+        if extraction_method == "none":
             return self.build_result(
                 task=task,
                 passed=False,
                 score=0.0,
                 response=response,
                 output=response_text,
-                error=f"Invalid JSON: {exc}",
+                error="Invalid JSON: no parseable JSON object/array found in response",
                 metadata={
                     "scenario_id": scenario_id,
                     "evaluation_status": "invalid_json",
-                    "summary": f"Invalid JSON: {exc}",
-                    "note": "Official score is 0 when the response is not valid JSON.",
+                    "summary": "Invalid JSON: no parseable JSON object/array found in response",
+                    "note": "Official score is 0 when no JSON could be extracted from the response.",
                     "category": task.validation.get("category"),
                     "title": task.validation.get("title"),
+                    "json_extraction_method": extraction_method,
                 },
             )
         exact_shape, fields_only, no_missing, compliance_notes = self._evaluate_compliance(expected, parsed)
@@ -216,6 +294,7 @@ class DataExtractSuite(BenchmarkSuite):
                 "note": note,
                 "category": task.validation.get("category"),
                 "title": task.validation.get("title"),
+                "json_extraction_method": extraction_method,
             },
         )
 

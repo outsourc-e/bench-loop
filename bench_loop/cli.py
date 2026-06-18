@@ -117,6 +117,19 @@ def info() -> None:
     default=None,
     help="API key for the endpoint. Also reads OPENAI_API_KEY env var. Required for vLLM, sglang, and most cloud providers.",
 )
+@click.option(
+    "--max-tokens",
+    "max_tokens",
+    default=None,
+    type=int,
+    help=(
+        "Override max_tokens for every task (fixtures default to 2048). Thinking models "
+        "can burn through 2048 tokens of <think> before reaching an answer, get cut off "
+        "mid-thought, and have the raw reasoning dumped into content -- which then fails "
+        "coding's code-block extraction and dataextract's JSON parse. Raise this (e.g. 8192) "
+        "when benchmarking a reasoning model to rule that out before trusting a low score."
+    ),
+)
 def run(
     model: str,
     endpoint: str,
@@ -132,6 +145,7 @@ def run(
     command_used: str | None,
     remote: bool,
     api_key: str | None,
+    max_tokens: int | None,
 ) -> None:
     """Run a benchmark."""
     # Set API key from CLI flag if provided (takes precedence over env var)
@@ -244,6 +258,7 @@ def run(
                 suites=selected_suites,
                 harness=harness,
                 remote=remote,
+                max_tokens=max_tokens,
                 on_progress=on_progress,
             )
         )

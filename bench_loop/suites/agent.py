@@ -328,11 +328,13 @@ class AgentSuite(BenchmarkSuite):
         task: BenchmarkTask,
         harness: Any | None = None,
         provider_name: str = "ollama",
+        max_tokens_override: int | None = None,
     ) -> TaskResult:
         """Run a multi-turn agent conversation against the model, executing tools
         between turns. This OVERRIDES the default single-shot run_task and is
         the heart of the agent suite.
         """
+        per_turn_max_tokens = max_tokens_override or 512
         validation = task.validation or {}
         max_turns = int(validation.get("max_turns", self.DEFAULT_MAX_TURNS))
         allowed_tools = list(validation.get("tools", list(TOOL_SCHEMAS)))
@@ -362,14 +364,14 @@ class AgentSuite(BenchmarkSuite):
                 id=task.id,
                 suite=self.name,
                 messages=messages,
-                config={**task.config, "tools": tool_schemas, "max_tokens": 512},
+                config={**task.config, "tools": tool_schemas, "max_tokens": per_turn_max_tokens},
                 validation=validation,
                 metadata=task.metadata,
             )
             request = (
                 harness.prepare(synthetic_task, provider_name=provider_name)
                 if harness is not None
-                else {"messages": messages, "tools": tool_schemas, "max_tokens": 512}
+                else {"messages": messages, "tools": tool_schemas, "max_tokens": per_turn_max_tokens}
             )
 
             response = await provider_module.chat(

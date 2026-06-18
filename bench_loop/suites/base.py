@@ -75,12 +75,15 @@ class BenchmarkSuite:
         task: BenchmarkTask,
         harness: Any | None = None,
         provider_name: str = "ollama",
+        max_tokens_override: int | None = None,
     ) -> TaskResult:
         request = (
             harness.prepare(task, provider_name=provider_name)
             if harness is not None
             else {"messages": task.messages, **task.config}
         )
+        if max_tokens_override is not None:
+            request["max_tokens"] = max_tokens_override
         response = await provider_module.chat(
             endpoint=endpoint,
             model=model,
