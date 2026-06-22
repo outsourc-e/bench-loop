@@ -153,6 +153,7 @@ async def run_benchmark(
         task_results: list[TaskResult] = []
         for task in tasks:
             if suite_name == "speed":
+                # Speed fixtures use deliberately tiny caps to measure raw throughput — never override.
                 result = await _run_speed_task(
                     provider_module,
                     endpoint,
@@ -162,7 +163,7 @@ async def run_benchmark(
                     harness=harness_adapter,
                     provider_name=provider,
                     remote=remote,
-                    max_tokens_override=max_tokens,
+                    max_tokens_override=None,
                 )
             else:
                 result = await suite.run_task(
